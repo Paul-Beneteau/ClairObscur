@@ -1,0 +1,72 @@
+#include "ClairPlayerCharacter.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "ClairGameStatics.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Kismet/BlueprintTypeConversions.h"
+#include "Kismet/KismetMathLibrary.h"
+
+// Setups spring arm and camera.
+AClairPlayerCharacter::AClairPlayerCharacter()
+{
+	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
+	SpringArmComp->SetupAttachment(RootComponent);
+	SpringArmComp->bUsePawnControlRotation = true;
+	// Disable side effect that rotate spring arm when capsule component is rotated (eg: with bOrientRotationToMovement)
+	SpringArmComp->SetUsingAbsoluteRotation(true);
+	
+	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
+	CameraComp->SetupAttachment(SpringArmComp);
+}
+
+void AClairPlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();	
+}
+
+// Loads player input mapping context and binds input actions to their corresponding functions.
+void AClairPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);	
+
+	const APlayerController* PlayerController = GetController<APlayerController>();
+	check(PlayerController);	
+	const ULocalPlayer* LocalPlayer = PlayerController->GetLocalPlayer();
+	check(LocalPlayer);	
+	UEnhancedInputLocalPlayerSubsystem* InputSubsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+	check(InputSubsystem);
+	
+	InputSubsystem->ClearAllMappings();
+	InputSubsystem->AddMappingContext(InputMappingContext, 0);
+
+	UEnhancedInputComponent* InputComp = CastChecked<UEnhancedInputComponent>(PlayerInputComponent);
+	
+	InputComp->BindAction(Input_Move, ETriggerEvent::Triggered, this, &AClairPlayerCharacter::Move);
+	InputComp->BindAction(Input_Look, ETriggerEvent::Triggered, this, &AClairPlayerCharacter::Look);
+}
+
+// Gets the forward and right axis player input movement and moves in the corresponding direction.
+// (e.g. by default keyboard key W and S forms the forward axis. A and D forms the right axis)
+void AClairPlayerCharacter::Move(const FInputActionInstance& MoveAxis2D)
+{
+	FRotator Direction = FRotator::ZeroRotator;
+	Direction.Yaw = GetControlRotation().Yaw;
+	
+	const double ForwardAxis = MoveAxis2D.GetValue().Get<FVector2D>().Y;	
+	AddMovementInput(Direction.Vector(), ForwardAxis);
+	
+	const double RightAxis = MoveAxis2D.GetValue().Get<FVector2D>().X;	
+	AddMovementInput(Direction.RotateVector(FVector::RightVector), RightAxis);	
+}
+
+// Rotates yaw player controller according the up and down mouse axis input and rotates pitch according to the left and
+// right mouse axis input.
+void AClairPlayerCharacter::Look(const FInputActionValue& MouseAxis2D)
+{
+	AddControllerYawInput(MouseAxis2D.Get<FVector2D>().X);
+	AddControllerPitchInput(-MouseAxis2D.Get<FVector2D>().Y);
+}
+
+
+
