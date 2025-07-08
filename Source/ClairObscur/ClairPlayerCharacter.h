@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "ClairPlayerCharacter.generated.h"
 
+class UClairAttributeComp;
 struct FInputActionValue;
 struct FInputActionInstance;
 class UCameraComponent;
@@ -37,6 +38,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> Input_Look;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UClairAttributeComp> AttributeComp;
 	
 	virtual void BeginPlay() override;
 
