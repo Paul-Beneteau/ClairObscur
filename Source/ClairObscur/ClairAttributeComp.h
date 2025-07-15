@@ -12,21 +12,37 @@ class CLAIROBSCUR_API UClairAttributeComp : public UActorComponent
 	GENERATED_BODY()
 
 public:
-	UPROPERTY()
+	UPROPERTY(BlueprintAssignable)
 	FOnAttributeChanged OnHealthChanged;
+	UPROPERTY(BlueprintAssignable)
+	FOnAttributeChanged OnActionPointsChanged;
 	
 	UClairAttributeComp();
 	
-	int32 GetMaxHealth() const { return MaxHealth; }	
-	int32 GetHealth() const { return Health; }
-
-	// Change health with the delta and checks that the new health is in valid boundaries.
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-	bool ApplyHealthDelta(const int32 Delta);
+	int32 GetMaxHealth() const { return MaxHealth; }
+	UFUNCTION(BlueprintCallable, Category = "Attributes")
+	int32 GetHealth() const { return Health; }
+	
+	UFUNCTION(BlueprintCallable, Category = "Attributes")
+	bool ChangeHealth(const int32 Delta);
+
+	UFUNCTION(BlueprintCallable, Category = "Attributes")
+	int32 GetActionPoints() const { return ActionPoints; }
+	UFUNCTION(BlueprintCallable, Category = "Attributes")
+	int32 GetMaxActionPoints() const { return MaxActionPoints; }
+	
+	UFUNCTION(BlueprintCallable, Category = "Attributes")
+	bool ChangeActionPoints(const int32 Delta);
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
-	int32 MaxHealth;
+	int32 Health;
 	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
-	int32 Health;	
+	int32 MaxHealth;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
+	int32 ActionPoints;
+	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
+	int32 MaxActionPoints;
 };
