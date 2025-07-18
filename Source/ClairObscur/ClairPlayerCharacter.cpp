@@ -8,9 +8,14 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/BlueprintTypeConversions.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "ClairAbilitySystemComponent.h"
+#include "ClairAttributeSet.h"
 
 AClairPlayerCharacter::AClairPlayerCharacter()
 {
+	ClairAbilitySystemComp = CreateDefaultSubobject<UClairAbilitySystemComponent>(TEXT("ClairAbilitySystemComp"));
+	ClairAttributeSet = CreateDefaultSubobject<UClairAttributeSet>(TEXT("ClairAttributeSet"));
+	
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
 	SpringArmComp->SetupAttachment(RootComponent);
 	// Player rotates the player controller when moving the mouse to look around which rotates the spring arm camera.
@@ -24,9 +29,19 @@ AClairPlayerCharacter::AClairPlayerCharacter()
 	AttributeComp = CreateDefaultSubobject<UClairAttributeComp>(TEXT("AttributeComp"));
 }
 
-void AClairPlayerCharacter::BeginPlay()
+// Initializes clair ability system component with his attribute set.
+void AClairPlayerCharacter::PostInitializeComponents()
 {
-	Super::BeginPlay();	
+	Super::PostInitializeComponents();
+
+	check(ClairAbilitySystemComp);
+	ClairAbilitySystemComp->InitAbilityActorInfo(this, this);
+	AttributeComp->InitializeWithAbilitySystem(ClairAbilitySystemComp);
+}
+
+UAbilitySystemComponent* AClairPlayerCharacter::GetAbilitySystemComponent() const
+{
+	return ClairAbilitySystemComp;
 }
 
 // Loads player input subsystem and mapping context then binds input actions to their corresponding functions.

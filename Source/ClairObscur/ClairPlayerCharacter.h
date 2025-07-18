@@ -2,8 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "AbilitySystemInterface.h"
 #include "ClairPlayerCharacter.generated.h"
 
+class UClairAttributeSet;
+class UClairAbilitySystemComponent;
 class UClairAttributeComp;
 struct FInputActionValue;
 struct FInputActionInstance;
@@ -13,17 +16,26 @@ class UInputAction;
 class UInputMappingContext;
 
 UCLASS()
-class CLAIROBSCUR_API AClairPlayerCharacter : public ACharacter
+class CLAIROBSCUR_API AClairPlayerCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
-public:
+public:	
 	AClairPlayerCharacter();
 
+	virtual void PostInitializeComponents() override;
+	
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UClairAbilitySystemComponent> ClairAbilitySystemComp;
 
+	UPROPERTY()
+	TObjectPtr<UClairAttributeSet> ClairAttributeSet;
+	
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCameraComponent> CameraComp;
 	
@@ -41,8 +53,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UClairAttributeComp> AttributeComp;
-	
-	virtual void BeginPlay() override;
 
 	// Moves player character according to (WASD by default) keyboard keys.
 	void Move(const FInputActionInstance& MoveAxis2D);

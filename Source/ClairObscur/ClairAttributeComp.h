@@ -1,10 +1,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ClairAttributeSet.h"
 #include "Components/ActorComponent.h"
+
 #include "ClairAttributeComp.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAttributeChanged, float, NewAttributeValue, float, Delta);
+class UClairAbilitySystemComponent;
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnAttributeChanged, UClairAttributeComp*, ClairAttributeComp, AActor*, Instigator, float, OldValue, float, NewValue);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class CLAIROBSCUR_API UClairAttributeComp : public UActorComponent
@@ -18,31 +21,29 @@ public:
 	FOnAttributeChanged OnActionPointsChanged;
 	
 	UClairAttributeComp();
+
+	// Initialize the component using an ability system component.
+	UFUNCTION(BlueprintCallable, Category = "Lyra|Health")
+	void InitializeWithAbilitySystem(UClairAbilitySystemComponent* ClairAbilitySystemComp);
 	
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-	int32 GetMaxHealth() const { return MaxHealth; }
+	int32 GetMaxHealth() const { return (ClairAttributeSet ? ClairAttributeSet->GetMaxHealth() : 0.0f); }
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-	int32 GetHealth() const { return Health; }
-	
-	UFUNCTION(BlueprintCallable, Category = "Attributes")
-	bool ChangeHealth(const int32 Delta);
+	int32 GetHealth() const { return (ClairAttributeSet ? ClairAttributeSet->GetHealth() : 0.0f); };
+	// Callback when health is changed
+	virtual void HandleHealthChanged(AActor* Instigator, float OldValue, float NewValue);
 
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-	int32 GetActionPoints() const { return ActionPoints; }
+	int32 GetMaxActionPoints() const { return (ClairAttributeSet ? ClairAttributeSet->GetMaxActionPoints() : 0.0f); }
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-	int32 GetMaxActionPoints() const { return MaxActionPoints; }
+	int32 GetActionPoints() const { return (ClairAttributeSet ? ClairAttributeSet->GetActionPoints() : 0.0f); }
+	// Callback when action points count is changed
+	virtual void HandleActionPointsChanged(AActor* Instigator, float OldValue, float NewValue);
 	
-	UFUNCTION(BlueprintCallable, Category = "Attributes")
-	bool ChangeActionPoints(const int32 Delta);
-	
+
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
-	int32 Health;
-	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
-	int32 MaxHealth;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
-	int32 ActionPoints;
-	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
-	int32 MaxActionPoints;
+	UPROPERTY()
+	TObjectPtr<UClairAbilitySystemComponent> ClairAbilitySystemComp;	
+	UPROPERTY()
+	TObjectPtr<const UClairAttributeSet> ClairAttributeSet;
 };

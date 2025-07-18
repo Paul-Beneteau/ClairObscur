@@ -1,50 +1,51 @@
 #include "ClairAttributeComp.h"
+#include "ClairAbilitySystemComponent.h"
 
 UClairAttributeComp::UClairAttributeComp()
 {
 }
 
-// Adds the delta to Health and clamp the new Health between 0 and MaxHealth
-// Returns true if the attribute has been modified.
-bool UClairAttributeComp::ChangeHealth(const int32 Delta)
+void UClairAttributeComp::InitializeWithAbilitySystem(UClairAbilitySystemComponent* InAbilitySystemComp)
 {
-	const int32 HealthBeforeDelta { Health };
+	AActor* Owner = GetOwner();
+	check(Owner);
 
-	// The new Health value must be between 0 and MaxHealth.
-	Health = FMath::Clamp(Health + Delta, 0, MaxHealth);
-	
-	const int32 DeltaApplied { Health - HealthBeforeDelta }; 
+	if (ClairAbilitySystemComp)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ClairAttributeComp: attribute component for owner [%s] has already been"
+			   " initialized with an ability system."), *GetNameSafe(Owner));
+		return;
+	}
 
-	if (DeltaApplied == 0)
+	ClairAbilitySystemComp = InAbilitySystemComp;
+	if (!ClairAbilitySystemComp)
 	{
-		return false;
+		UE_LOG(LogTemp, Error, TEXT("ClairAttributeComp: Cannot initialize attribute component for owner [%s]"
+			   " with NULL ability system."), *GetNameSafe(Owner));
+		return;
 	}
-	else
+
+	ClairAttributeSet = ClairAbilitySystemComp->GetSet<UClairAttributeSet>();
+	if (!ClairAttributeSet)
 	{
-		OnHealthChanged.Broadcast(Health, DeltaApplied);
-		return true;		
+		UE_LOG(LogTemp, Error, TEXT("ClairAttributeComp: Cannot initialize Attribute component for owner [%s]"
+			   " with NULL health set on the ability system."), *GetNameSafe(Owner));
+		return;
 	}
+
+	// Register callbacks to listen for attribute changes.
+	ClairAttributeSet->OnHealthChanged.AddUObject(this, &ThisClass::HandleHealthChanged);
+	ClairAttributeSet->OnActionPointsChanged.AddUObject(this, &ThisClass::HandleActionPointsChanged);
 }
 
-// Adds the delta to the action points count and clamp the new action points count between 0 and MaxActionPoints
-// Returns true if the attribute has been modified.
-bool UClairAttributeComp::ChangeActionPoints(const int32 Delta)
+void UClairAttributeComp::HandleHealthChanged(AActor* Instigator, float OldValue, float NewValue)
 {
-	const int32 ActionPointsBeforeDelta { ActionPoints };
-
-	// The new action points count must be between 0 and MaxActionPoints.
-	ActionPoints = FMath::Clamp(ActionPoints + Delta, 0, MaxActionPoints);
-	
-	const int32 DeltaApplied { ActionPoints - ActionPointsBeforeDelta }; 
-
-	if (DeltaApplied == 0)
-	{
-		return false;
-	}
-	else
-	{
-		OnActionPointsChanged.Broadcast(ActionPoints, DeltaApplied);
-		return true;		
-	}
+	OnHealthChanged.Broadcast(this, Instigator, OldValue, NewValue);
 }
+
+void UClairAttributeComp::HandleActionPointsChanged(AActor* Instigator, float OldValue, float NewValue)
+{
+	OnActionPointsChanged.Broadcast(this, Instigator, OldValue, NewValue);
+}
+
 
