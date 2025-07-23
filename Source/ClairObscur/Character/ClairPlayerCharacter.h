@@ -36,6 +36,9 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UClairAttributeSet> ClairAttributeSet;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UClairAttributeComp> AttributeComp;
+	
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCameraComponent> CameraComp;
 	
@@ -50,9 +53,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> Input_Look;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
-	TObjectPtr<UClairAttributeComp> AttributeComp;
 
 	// Moves player character according to (WASD by default) keyboard keys.
 	void Move(const FInputActionInstance& MoveAxis2D);
