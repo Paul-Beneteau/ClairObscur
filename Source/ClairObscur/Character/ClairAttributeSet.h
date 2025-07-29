@@ -31,14 +31,12 @@ public:
 	mutable FClairAttributeEvent OnHealthChanged;
 	mutable FClairAttributeEvent OnActionPointsChanged;
 	
-	UClairAttributeSet();
-	
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
 	virtual bool PreGameplayEffectExecute(FGameplayEffectModCallbackData &Data) override;
 	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
 	
 protected:
-	UPROPERTY(BlueprintReadOnly, Category = "Attributes", meta = (HideFromModifiers))
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
 	FGameplayAttributeData Health;
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
 	FGameplayAttributeData MaxHealth;

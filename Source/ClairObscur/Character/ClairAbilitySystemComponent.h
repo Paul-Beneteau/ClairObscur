@@ -13,5 +13,7 @@ UCLASS()
 class CLAIROBSCUR_API UClairAbilitySystemComponent : public UAbilitySystemComponent
 {
 	GENERATED_BODY()
-	
+
+public:
+	void Initialize(AActor* InOwnerActor, AActor* InAvatarActor);
 };

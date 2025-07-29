@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "ClairBotCharacter.generated.h"
 
+class UGameplayEffect;
 class UClairAttributeComp;
 class UClairAttributeSet;
 class UClairAbilitySystemComponent;
@@ -19,17 +20,19 @@ class CLAIROBSCUR_API AClairBotCharacter : public ACharacter, public IAbilitySys
 public:
 	AClairBotCharacter();
 
-	virtual void PostInitializeComponents() override;
+	virtual void BeginPlay() override;
 	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	
 protected:
+	// GAS Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UClairAbilitySystemComponent> ClairAbilitySystemComp;
-
 	UPROPERTY()
 	TObjectPtr<UClairAttributeSet> ClairAttributeSet;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UClairAttributeComp> AttributeComp;
+	// Initialize attribute value with a gameplay effect
+	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
+	TSubclassOf<UGameplayEffect> InitialGameplayEffect;
 };

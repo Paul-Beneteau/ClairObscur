@@ -1,15 +1,11 @@
 #include "ClairAttributeComp.h"
 #include "ClairAbilitySystemComponent.h"
 
-UClairAttributeComp::UClairAttributeComp()
-{
-}
-
-void UClairAttributeComp::InitializeWithAbilitySystem(UClairAbilitySystemComponent* InAbilitySystemComp)
+void UClairAttributeComp::Initialize(UClairAbilitySystemComponent* InAbilitySystemComp, TSubclassOf<UGameplayEffect> InitialGameplayEffect)
 {
 	AActor* Owner = GetOwner();
 	check(Owner);
-
+	
 	if (ClairAbilitySystemComp)
 	{
 		UE_LOG(LogTemp, Error, TEXT("ClairAttributeComp: attribute component for owner [%s] has already been"
@@ -36,6 +32,10 @@ void UClairAttributeComp::InitializeWithAbilitySystem(UClairAbilitySystemCompone
 	// Register callbacks to listen for attribute changes.
 	ClairAttributeSet->OnHealthChanged.AddUObject(this, &ThisClass::HandleHealthChanged);
 	ClairAttributeSet->OnActionPointsChanged.AddUObject(this, &ThisClass::HandleActionPointsChanged);
+
+	// Initialize attribute values with an initial gameplay effect
+	ClairAbilitySystemComp->ApplyGameplayEffectToSelf(InitialGameplayEffect->GetDefaultObject<UGameplayEffect>(),
+		0.0f, ClairAbilitySystemComp->MakeEffectContext());
 }
 
 void UClairAttributeComp::HandleHealthChanged(AActor* Instigator, float OldValue, float NewValue)

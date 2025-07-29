@@ -12,13 +12,13 @@ AClairBotCharacter::AClairBotCharacter()
 	AttributeComp = CreateDefaultSubobject<UClairAttributeComp>(TEXT("BotAttributeComp"));
 }
 
-void AClairBotCharacter::PostInitializeComponents()
+void AClairBotCharacter::BeginPlay()
 {
-	Super::PostInitializeComponents();
+	Super::BeginPlay();
 
 	check(ClairAbilitySystemComp);
-	ClairAbilitySystemComp->InitAbilityActorInfo(this, this);
-	AttributeComp->InitializeWithAbilitySystem(ClairAbilitySystemComp);
+	ClairAbilitySystemComp->Initialize(this, this);
+	AttributeComp->Initialize(ClairAbilitySystemComp, InitialGameplayEffect);
 }
 
 UAbilitySystemComponent* AClairBotCharacter::GetAbilitySystemComponent() const

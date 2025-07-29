@@ -1,5 +1,6 @@
 #include "ClairPlayerCharacter.h"
 
+#include "ClairAbilitySet.h"
 #include "ClairAttributeComp.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -13,6 +14,7 @@
 
 AClairPlayerCharacter::AClairPlayerCharacter()
 {
+	SetNetUpdateFrequency(100.0f);
 	ClairAbilitySystemComp = CreateDefaultSubobject<UClairAbilitySystemComponent>(TEXT("ClairAbilitySystemComp"));
 	ClairAttributeSet = CreateDefaultSubobject<UClairAttributeSet>(TEXT("ClairAttributeSet"));
 	AttributeComp = CreateDefaultSubobject<UClairAttributeComp>(TEXT("AttributeComp"));
@@ -26,18 +28,20 @@ AClairPlayerCharacter::AClairPlayerCharacter()
 	
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(SpringArmComp);
-
-
 }
 
-// Initializes clair ability system component with his attribute set.
-void AClairPlayerCharacter::PostInitializeComponents()
+// Initializes clair ability system component with his attribute set and grant initial ability set.
+void AClairPlayerCharacter::BeginPlay()
 {
-	Super::PostInitializeComponents();
+	Super::BeginPlay();
 
 	check(ClairAbilitySystemComp);
-	ClairAbilitySystemComp->InitAbilityActorInfo(this, this);
-	AttributeComp->InitializeWithAbilitySystem(ClairAbilitySystemComp);
+	ClairAbilitySystemComp->Initialize(this, this);
+	check(AttributeComp);
+	AttributeComp->Initialize(ClairAbilitySystemComp, InitialGameplayEffect);
+	
+	check(ClairAbilitySet);
+	ClairAbilitySet->GrantAbilities(ClairAbilitySystemComp);
 }
 
 UAbilitySystemComponent* AClairPlayerCharacter::GetAbilitySystemComponent() const
@@ -64,8 +68,26 @@ void AClairPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	// Binds input actions
 	UEnhancedInputComponent* InputComp { CastChecked<UEnhancedInputComponent>(PlayerInputComponent) };
 	
-	InputComp->BindAction(Input_Move, ETriggerEvent::Triggered, this, &AClairPlayerCharacter::Move);
-	InputComp->BindAction(Input_Look, ETriggerEvent::Triggered, this, &AClairPlayerCharacter::Look);
+	InputComp->BindAction(InputAction_Move, ETriggerEvent::Triggered, this, &AClairPlayerCharacter::Move);
+	InputComp->BindAction(InputAction_Look, ETriggerEvent::Triggered, this, &AClairPlayerCharacter::Look);
+	
+	for (FClairAbilityInput ClairAbilityInput : ClairAbilityInputSet)
+	{
+		InputComp->BindAction(ClairAbilityInput.InputAction, ETriggerEvent::Started, this,
+			&AClairPlayerCharacter::AbilityInputBindingPressedHandler, ClairAbilityInput.Key);
+		InputComp->BindAction(ClairAbilityInput.InputAction, ETriggerEvent::Completed, this,
+			&AClairPlayerCharacter::AbilityInputBindingReleasedHandler, ClairAbilityInput.Key);
+	}
+}
+
+void AClairPlayerCharacter::AbilityInputBindingPressedHandler(EAbilityInputKey Key)
+{
+	ClairAbilitySystemComp->AbilityLocalInputPressed(static_cast<uint32>(Key));
+}
+
+void AClairPlayerCharacter::AbilityInputBindingReleasedHandler(EAbilityInputKey Key)
+{
+	ClairAbilitySystemComp->AbilityLocalInputReleased(static_cast<uint32>(Key));
 }
 
 // Gets the forward and right axis player input movement and moves in the corresponding direction.

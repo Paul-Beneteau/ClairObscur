@@ -4,16 +4,6 @@
 #include "ClairAttributeSet.h"
 #include "GameplayEffectExtension.h"
 
-
-// TODO: add data assets to initialize attributes.
-UClairAttributeSet::UClairAttributeSet()
-	: Health(100.0f)
-	, MaxHealth(100.0f)
-	, ActionPoints(2.0f)
-	, MaxActionPoints(9.0f)
-{
-}
-
 void UClairAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
 	Super::PreAttributeChange(Attribute, NewValue);
@@ -75,7 +65,7 @@ void UClairAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 		SetHeal(0.0f);
 	}
 	else if (Data.EvaluatedData.Attribute == GetActionPointsAttribute())
-	{
+	{		
 		// Clamp new action points between 0 and MaxActionPoints and set new action points count
 		SetActionPoints(FMath::Clamp(GetActionPoints(), 0.0f, GetMaxActionPoints()));
 	}

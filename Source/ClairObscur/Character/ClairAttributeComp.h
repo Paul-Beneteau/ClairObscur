@@ -20,11 +20,8 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnAttributeChanged OnActionPointsChanged;
 	
-	UClairAttributeComp();
-
 	// Initialize the component using an ability system component.
-	UFUNCTION(BlueprintCallable, Category = "Lyra|Health")
-	void InitializeWithAbilitySystem(UClairAbilitySystemComponent* ClairAbilitySystemComp);
+	void Initialize(UClairAbilitySystemComponent* ClairAbilitySystemComp, TSubclassOf<UGameplayEffect> InitialGameplayEffect);
 	
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	int32 GetMaxHealth() const { return (ClairAttributeSet ? ClairAttributeSet->GetMaxHealth() : 0.0f); }
