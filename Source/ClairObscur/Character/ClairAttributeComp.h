@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "ClairAttributeSet.h"
 #include "Components/ActorComponent.h"
+#include "ClairAbilitySystemComponent.h"
 
 #include "ClairAttributeComp.generated.h"
 
@@ -19,9 +20,9 @@ public:
 	FOnAttributeChanged OnHealthChanged;
 	UPROPERTY(BlueprintAssignable)
 	FOnAttributeChanged OnActionPointsChanged;
-	
+
 	// Initialize the component using an ability system component.
-	void Initialize(UClairAbilitySystemComponent* ClairAbilitySystemComp, TSubclassOf<UGameplayEffect> InitialGameplayEffect);
+	void Initialize(UClairAbilitySystemComponent* ClairAbilitySystemComp);
 	
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	int32 GetMaxHealth() const { return (ClairAttributeSet ? ClairAttributeSet->GetMaxHealth() : 0.0f); }
@@ -43,4 +44,8 @@ protected:
 	TObjectPtr<UClairAbilitySystemComponent> ClairAbilitySystemComp;	
 	UPROPERTY()
 	TObjectPtr<const UClairAttributeSet> ClairAttributeSet;
+	
+	// Initialize attribute value with a gameplay effect
+	UPROPERTY(EditDefaultsOnly, Category = "Initialization")
+	TSubclassOf<UGameplayEffect> InitialGameplayEffect;
 };

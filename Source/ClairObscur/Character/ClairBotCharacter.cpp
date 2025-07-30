@@ -16,9 +16,8 @@ void AClairBotCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	check(ClairAbilitySystemComp);
 	ClairAbilitySystemComp->Initialize(this, this);
-	AttributeComp->Initialize(ClairAbilitySystemComp, InitialGameplayEffect);
+	AttributeComp->Initialize(ClairAbilitySystemComp);
 }
 
 UAbilitySystemComponent* AClairBotCharacter::GetAbilitySystemComponent() const

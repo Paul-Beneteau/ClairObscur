@@ -6,7 +6,7 @@
 #include "ClairAbilitySystemComponent.h"
 #include "ClairPlayerCharacter.generated.h"
 
-enum class EAbilityInputKey : uint8;
+enum class EAbilityInputID : uint8;
 struct FGameplayAbilitySpecHandle;
 class UClairAbilitySet;
 class UGameplayEffect;
@@ -20,17 +20,17 @@ class USpringArmComponent;
 class UInputAction;
 class UInputMappingContext;
 
-// Bind an input action with a gameplay ability key
+// Bind an input action with a gameplay ability input ID
 USTRUCT()
 struct FClairAbilityInput
 {
 	GENERATED_BODY()
 
 	UPROPERTY(EditDefaultsOnly)
-	UInputAction* InputAction;
+	UInputAction* InputAction { nullptr };
 
 	UPROPERTY(EditDefaultsOnly)
-	EAbilityInputKey Key;
+	EAbilityInputID InputID;
 };
 
 UCLASS()
@@ -50,17 +50,12 @@ public:
 	
 protected:
 	// GAS components
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UClairAbilitySystemComponent> ClairAbilitySystemComp;
 	UPROPERTY()
 	TObjectPtr<UClairAttributeSet> ClairAttributeSet;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UClairAttributeComp> AttributeComp;
-	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
-	TObjectPtr<UClairAbilitySet> ClairAbilitySet;
-	// Initialize attribute value with a gameplay effect
-	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
-	TSubclassOf<UGameplayEffect> InitialGameplayEffect;
 
 	// Camera components
 	UPROPERTY(VisibleAnywhere)
@@ -79,8 +74,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TArray<FClairAbilityInput> ClairAbilityInputSet;
 	
-	void AbilityInputBindingPressedHandler(EAbilityInputKey Key);	
-	void AbilityInputBindingReleasedHandler(EAbilityInputKey Key);
+	void AbilityPressedHandler(EAbilityInputID InputID);	
+	void AbilityReleasedHandler(EAbilityInputID InputID);
 	
 	// Moves player character according to (WASD by default) keyboard keys.
 	void Move(const FInputActionInstance& MoveAxis2D);

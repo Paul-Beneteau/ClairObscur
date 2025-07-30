@@ -26,13 +26,10 @@ public:
 	
 protected:
 	// GAS Components
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UClairAbilitySystemComponent> ClairAbilitySystemComp;
 	UPROPERTY()
 	TObjectPtr<UClairAttributeSet> ClairAttributeSet;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<UClairAttributeComp> AttributeComp;
-	// Initialize attribute value with a gameplay effect
-	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
-	TSubclassOf<UGameplayEffect> InitialGameplayEffect;
 };
