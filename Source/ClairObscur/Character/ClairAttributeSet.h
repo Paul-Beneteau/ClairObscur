@@ -27,7 +27,8 @@ public:
 	ATTRIBUTE_ACCESSORS(UClairAttributeSet, Heal)
 	ATTRIBUTE_ACCESSORS(UClairAttributeSet, ActionPoints)
 	ATTRIBUTE_ACCESSORS(UClairAttributeSet, MaxActionPoints)
-
+	ATTRIBUTE_ACCESSORS(UClairAttributeSet, Speed)
+	
 	mutable FClairAttributeEvent OnHealthChanged;
 	mutable FClairAttributeEvent OnActionPointsChanged;
 	
@@ -41,7 +42,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
 	FGameplayAttributeData MaxHealth;
 	float HealthBeforeChange { 0.0f };
-
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
 	FGameplayAttributeData Damage;	
@@ -53,5 +53,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
 	FGameplayAttributeData MaxActionPoints;
 	float ActionPointsBeforeChange { 0.0f };
-	
+
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
+	FGameplayAttributeData Speed;	
 };

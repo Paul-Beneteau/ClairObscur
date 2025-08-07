@@ -41,6 +41,16 @@ UAbilitySystemComponent* AClairPlayerCharacter::GetAbilitySystemComponent() cons
 	return ClairAbilitySystemComp;
 }
 
+void AClairPlayerCharacter::TakeTurn_Implementation()
+{
+	UE_LOG(ClairLog, Display, TEXT("Player: TakeTurn_Implementation - speed: %f"), GetSpeed_Implementation());
+}
+
+float AClairPlayerCharacter::GetSpeed_Implementation() const
+{
+	return AttributeComp->GetSpeed();
+}
+
 // Loads player input subsystem and mapping context then binds input actions to their corresponding functions.
 void AClairPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -60,8 +70,8 @@ void AClairPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	// Binds input actions
 	UEnhancedInputComponent* InputComp { CastChecked<UEnhancedInputComponent>(PlayerInputComponent) };
 	
-	InputComp->BindAction(InputAction_Move, ETriggerEvent::Triggered, this, &AClairPlayerCharacter::Move);
-	InputComp->BindAction(InputAction_Look, ETriggerEvent::Triggered, this, &AClairPlayerCharacter::Look);
+	//InputComp->BindAction(InputAction_Move, ETriggerEvent::Triggered, this, &AClairPlayerCharacter::Move);
+	//InputComp->BindAction(InputAction_Look, ETriggerEvent::Triggered, this, &AClairPlayerCharacter::Look);
 
 	for (FClairAbilityInput ClairAbilityInput : ClairAbilityInputSet)
 	{

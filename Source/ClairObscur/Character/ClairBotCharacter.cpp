@@ -4,6 +4,7 @@
 #include "ClairBotCharacter.h"
 #include "ClairAbilitySystemComponent.h"
 #include "ClairAttributeComp.h"
+#include "ClairObscur/ClairGameStatics.h"
 
 AClairBotCharacter::AClairBotCharacter()
 {
@@ -23,5 +24,15 @@ void AClairBotCharacter::BeginPlay()
 UAbilitySystemComponent* AClairBotCharacter::GetAbilitySystemComponent() const
 {
 	return ClairAbilitySystemComp;
+}
+
+void AClairBotCharacter::TakeTurn_Implementation()
+{
+	UE_LOG(ClairLog, Display, TEXT("Bot: TakeTurn_Implementation - speed: %f"), GetSpeed_Implementation());
+}
+
+float AClairBotCharacter::GetSpeed_Implementation() const
+{
+	return AttributeComp->GetSpeed();
 }
 

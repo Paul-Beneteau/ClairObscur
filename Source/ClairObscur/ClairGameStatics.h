@@ -4,6 +4,8 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "ClairGameStatics.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(ClairLog, Display, All);
+
 /**
  * 
  */

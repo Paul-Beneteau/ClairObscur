@@ -38,7 +38,9 @@ public:
 	// Callback when action points count is changed
 	virtual void HandleActionPointsChanged(AActor* Instigator, float OldValue, float NewValue);
 	
-
+	UFUNCTION(BlueprintCallable, Category = "Attributes")
+	int32 GetSpeed() const { return (ClairAttributeSet ? ClairAttributeSet->GetSpeed() : 0.0f); }
+	
 protected:
 	UPROPERTY()
 	TObjectPtr<UClairAbilitySystemComponent> ClairAbilitySystemComp;	
@@ -46,6 +48,6 @@ protected:
 	TObjectPtr<const UClairAttributeSet> ClairAttributeSet;
 	
 	// Initialize attribute value with a gameplay effect
-	UPROPERTY(EditDefaultsOnly, Category = "Initialization")
+	UPROPERTY(EditAnywhere, Category = "Initialization")
 	TSubclassOf<UGameplayEffect> InitialGameplayEffect;
 };

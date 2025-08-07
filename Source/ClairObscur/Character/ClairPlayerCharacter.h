@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "ClairAbilitySystemComponent.h"
+#include "ClairObscur/GameMode/TurnCharacterInterface.h"
 #include "ClairPlayerCharacter.generated.h"
 
 enum class EAbilityInputID : uint8;
@@ -30,11 +31,11 @@ struct FClairAbilityInput
 	UInputAction* InputAction { nullptr };
 
 	UPROPERTY(EditDefaultsOnly)
-	EAbilityInputID InputID;
+	EAbilityInputID InputID { EAbilityInputID::None };
 };
 
 UCLASS()
-class CLAIROBSCUR_API AClairPlayerCharacter : public ACharacter, public IAbilitySystemInterface
+class CLAIROBSCUR_API AClairPlayerCharacter : public ACharacter, public IAbilitySystemInterface, public ITurnCharacterInterface
 {
 	GENERATED_BODY()
 
@@ -45,8 +46,12 @@ public:
 	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
-	// Implements ability system interface
+	// Implements IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	// Implements ITurnCharacterInterface
+	virtual void TakeTurn_Implementation() override;
+	virtual float GetSpeed_Implementation() const override;
 	
 protected:
 	// GAS components

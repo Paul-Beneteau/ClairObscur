@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "ClairObscur/GameMode/TurnCharacterInterface.h"
 #include "GameFramework/Character.h"
 #include "ClairBotCharacter.generated.h"
 
@@ -13,7 +14,7 @@ class UClairAttributeSet;
 class UClairAbilitySystemComponent;
 
 UCLASS()
-class CLAIROBSCUR_API AClairBotCharacter : public ACharacter, public IAbilitySystemInterface
+class CLAIROBSCUR_API AClairBotCharacter : public ACharacter, public IAbilitySystemInterface, public ITurnCharacterInterface
 {
 	GENERATED_BODY()
 
@@ -22,7 +23,12 @@ public:
 
 	virtual void BeginPlay() override;
 	
+	// Implements IAbilitySystemInterface
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	// Implements ITurnCharacterInterface
+	virtual void TakeTurn_Implementation() override;
+	virtual float GetSpeed_Implementation() const override;
 	
 protected:
 	// GAS Components
@@ -30,6 +36,6 @@ protected:
 	TObjectPtr<UClairAbilitySystemComponent> ClairAbilitySystemComp;
 	UPROPERTY()
 	TObjectPtr<UClairAttributeSet> ClairAttributeSet;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UClairAttributeComp> AttributeComp;
 };
