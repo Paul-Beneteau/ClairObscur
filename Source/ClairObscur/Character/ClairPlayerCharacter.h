@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "ClairAbilitySystemComponent.h"
+#include "ClairCharacter.h"
 #include "ClairObscur/GameMode/TurnCharacterInterface.h"
 #include "ClairPlayerCharacter.generated.h"
 
@@ -35,33 +36,18 @@ struct FClairAbilityInput
 };
 
 UCLASS()
-class CLAIROBSCUR_API AClairPlayerCharacter : public ACharacter, public IAbilitySystemInterface, public ITurnCharacterInterface
+class CLAIROBSCUR_API AClairPlayerCharacter : public AClairCharacter//, public ITurnCharacterInterface
 {
 	GENERATED_BODY()
 
 public:
 	AClairPlayerCharacter();
 	
-	virtual void BeginPlay() override;
-	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
-	// Implements IAbilitySystemInterface
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
-
-	// Implements ITurnCharacterInterface
-	virtual void TakeTurn_Implementation() override;
-	virtual float GetSpeed_Implementation() const override;
+	virtual void PlayTurn_Implementation() override;
 	
 protected:
-	// GAS components
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<UClairAbilitySystemComponent> ClairAbilitySystemComp;
-	UPROPERTY()
-	TObjectPtr<UClairAttributeSet> ClairAttributeSet;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<UClairAttributeComp> AttributeComp;
-
 	// Camera components
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UCameraComponent> CameraComp;	

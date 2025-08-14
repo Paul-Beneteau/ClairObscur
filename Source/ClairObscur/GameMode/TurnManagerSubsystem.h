@@ -7,7 +7,7 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "TurnManagerSubsystem.generated.h"
 
-// Used to store an actor with TurnCharacter interface and his number of turns per round
+// Used to store an actor with TurnCharacterInterface and his number of turns per round
 USTRUCT()
 struct FTurnCharacter
 {
@@ -16,12 +16,12 @@ struct FTurnCharacter
 	UPROPERTY()
 	AActor* Actor { nullptr };
 
-	// Number of turns in a round. A round consists of a series of turns where all TurnCharacters takes at least one turn
-	// e.g. TurnCharacter 1 has 3 TurnsPerRound and TurnCharacter 2 has 1 TurnsPerRound. TurnCharacter 1 will take 3 
-	// turns during the round and TurnCharacter 2 will take 1 Turn
+	// Number of turns in a round. A round consists of a series of turns where all characters takes at least one turn
+	// e.g. character 1 has 3 TurnsPerRound and character 2 has 1 TurnsPerRound. character 1 will take 3 turns during
+	// the round and character 2 will take 1 Turn
 	float TurnsPerRound { 0.0f };
 
-	// Number of remaining turns in the round. it decreases by one each time a TurnCharacter takes a turn.
+	// Number of remaining turns in the round. it decreases by one each time a character takes a turn.
 	float RemainingTurnsPerRound { 0.0f };
 };
 
@@ -33,40 +33,44 @@ class CLAIROBSCUR_API UTurnManagerSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 	
 public:
-	// Initializes class members then TurnCharacters managed by the TurnManager takes their turn in the order computed
+	// Initializes class members then characters managed by the TurnManager takes their turn in the order computed
 	// from their speed.
 	void Start();
-		
+	
 protected:
 	// Contains every actor that implements TurnCharacterInterface in the world 
 	UPROPERTY()
-	TArray<FTurnCharacter> WorldTurnCharacters;
+	TArray<FTurnCharacter> Characters;
 
 	// FIFO that Contains next TurnCharacters that will take turn
 	TSpscQueue<AActor*> TurnQueue;
 
 	int32 TurnQueueSize { 6 };
 
-	// Saves the slowest TurnCharacter used to compute the number of turn per round of each TurnCharacter
+	// Saves the slowest character used to compute the number of turn per round of each character
 	UPROPERTY()
-	AActor* SlowestTurnCharacter { nullptr };
+	AActor* SlowestCharacter { nullptr };
 
-	// Initializes WorldTurnCharacters member with actors in the world that implements TurnCharacterInterface
-	void InitWorldTurnCharacters();	
-	// Saves Slowest TurnCharacter in SlowestTurnCharacter member
-	void InitSlowestTurnCharacter();
-	// Computes TurnCharacter TurnsPerRound
+	// Next character in queue takes his turn
+	UFUNCTION()
+	void StartNextTurn();
+	
+	// Initializes Characters class member with actors in the world that implements TurnCharacterInterface
+	void InitCharacters();	
+	// Saves slowest character in SlowestCharacter class member
+	void InitSlowestCharacter();
+	// Computes every character TurnsPerRound
 	void InitTurnsPerRound();	
-	// Initializes TurnQueue with first TurnCharacters that will take turn
+	// Initializes TurnQueue with first characters that will take turn
 	void InitTurnQueue();
 
-	void NextTurnCharacterTakesTurn();
+	AActor* DeQueueCharacter();	
+	// Queue next character in the FIFO TurnQueue. Return the queued character
+	AActor* EnQueueCharacter();
 
-	// Adds next TurnCharacter in the FIFO TurnQueue. Return the added TurnCharacter
-	AActor* EnQueueNextTurnCharacter();
+	// Is this the end of a round after the character takes his turn
+	bool IsEndOfRound(const AActor* Character) const; 
 
-	bool IsEndOfRound(const AActor* NextTurnCharacter) const; 
-
-	// Update the remaining turn per round of every TurnCharacter. It should be used at the end of a round
-	void UpdateRemainingTurnsPerRound();	
+	// Update the remaining turn per round of every character. It should be used at the end of a round
+	void UpdateRemainingTurnsPerRound();
 };

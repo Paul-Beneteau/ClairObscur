@@ -23,10 +23,10 @@ struct FClairAbility
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
+	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UGameplayAbility> GameplayAbility;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
+	UPROPERTY(EditDefaultsOnly)
 	EAbilityInputID InputID { 0 };
 };
 
@@ -37,10 +37,17 @@ class CLAIROBSCUR_API UClairAbilitySystemComponent : public UAbilitySystemCompon
 
 public:
 	void Initialize(AActor* InOwnerActor, AActor* InAvatarActor);
+
+	void StartAbility(const EAbilityInputID InputID);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	AActor* CurrentTarget { nullptr };
 	
 protected:
 
 	// Contains gameplay abilities with their associated input key
-	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
+	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TArray<FClairAbility> ClairAbilitySet;
+
+	TMap<EAbilityInputID, FGameplayAbilitySpecHandle> AbilitySpecHandles;
 };

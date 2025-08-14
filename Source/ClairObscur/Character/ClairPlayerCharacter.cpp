@@ -8,14 +8,10 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "ClairAbilitySystemComponent.h"
 #include "ClairAttributeSet.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 AClairPlayerCharacter::AClairPlayerCharacter()
-{
-	SetNetUpdateFrequency(100.0f);
-	ClairAbilitySystemComp = CreateDefaultSubobject<UClairAbilitySystemComponent>(TEXT("ClairAbilitySystemComp"));
-	ClairAttributeSet = CreateDefaultSubobject<UClairAttributeSet>(TEXT("ClairAttributeSet"));
-	AttributeComp = CreateDefaultSubobject<UClairAttributeComp>(TEXT("AttributeComp"));
-	
+{	
 	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
 	SpringArmComp->SetupAttachment(RootComponent);
 	// Player rotates the player controller when moving the mouse to look around which rotates the spring arm camera.
@@ -25,30 +21,6 @@ AClairPlayerCharacter::AClairPlayerCharacter()
 	
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
 	CameraComp->SetupAttachment(SpringArmComp);
-}
-
-// Initializes clair ability system component with his attribute set and grant initial ability set.
-void AClairPlayerCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-
-	ClairAbilitySystemComp->Initialize(this, this);
-	AttributeComp->Initialize(ClairAbilitySystemComp);
-}
-
-UAbilitySystemComponent* AClairPlayerCharacter::GetAbilitySystemComponent() const
-{
-	return ClairAbilitySystemComp;
-}
-
-void AClairPlayerCharacter::TakeTurn_Implementation()
-{
-	UE_LOG(ClairLog, Display, TEXT("Player: TakeTurn_Implementation - speed: %f"), GetSpeed_Implementation());
-}
-
-float AClairPlayerCharacter::GetSpeed_Implementation() const
-{
-	return AttributeComp->GetSpeed();
 }
 
 // Loads player input subsystem and mapping context then binds input actions to their corresponding functions.
@@ -69,9 +41,10 @@ void AClairPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 
 	// Binds input actions
 	UEnhancedInputComponent* InputComp { CastChecked<UEnhancedInputComponent>(PlayerInputComponent) };
-	
-	//InputComp->BindAction(InputAction_Move, ETriggerEvent::Triggered, this, &AClairPlayerCharacter::Move);
-	//InputComp->BindAction(InputAction_Look, ETriggerEvent::Triggered, this, &AClairPlayerCharacter::Look);
+
+	// TODO: Remove comments
+	InputComp->BindAction(InputAction_Move, ETriggerEvent::Triggered, this, &AClairPlayerCharacter::Move);
+	InputComp->BindAction(InputAction_Look, ETriggerEvent::Triggered, this, &AClairPlayerCharacter::Look);
 
 	for (FClairAbilityInput ClairAbilityInput : ClairAbilityInputSet)
 	{
@@ -80,6 +53,11 @@ void AClairPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		InputComp->BindAction(ClairAbilityInput.InputAction, ETriggerEvent::Completed, this,
 			&AClairPlayerCharacter::AbilityReleasedHandler, ClairAbilityInput.InputID);
 	}
+}
+
+void AClairPlayerCharacter::PlayTurn_Implementation()
+{
+	UE_LOG(ClairLog, Display, TEXT("Player: TakeTurn_Implementation - speed: %f"), GetSpeed_Implementation());
 }
 
 void AClairPlayerCharacter::AbilityPressedHandler(EAbilityInputID InputID)

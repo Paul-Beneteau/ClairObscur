@@ -6,9 +6,6 @@
 #include "GameFramework/GameModeBase.h"
 #include "ClairGameModeBase.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class CLAIROBSCUR_API AClairGameModeBase : public AGameModeBase
 {
