@@ -6,9 +6,7 @@
 #include "ClairAbilitySystemComponent.h"
 #include "ClairAttributeComp.h"
 #include "ClairAttributeSet.h"
-#include "ClairObscur/ClairGameStatics.h"
-#include "ClairObscur/GameMode/TurnDelegate.h"
-#include "Kismet/GameplayStatics.h"
+#include "ClairObscur/GameMode/TurnManagerSubsystem.h"
 
 AClairCharacter::AClairCharacter()
 {
@@ -16,7 +14,6 @@ AClairCharacter::AClairCharacter()
 	ClairAbilitySystemComp = CreateDefaultSubobject<UClairAbilitySystemComponent>(TEXT("ClairAbilitySystemComp"));
 	ClairAttributeSet = CreateDefaultSubobject<UClairAttributeSet>(TEXT("ClairAttributeSet"));
 	AttributeComp = CreateDefaultSubobject<UClairAttributeComp>(TEXT("AttributeComp"));
-	OnTurnEnded = CreateDefaultSubobject<UTurnDelegate>(TEXT("OnTurnEnded"));
 }
 
 // Initializes clair ability system component with his attribute set and grant initial ability set.
@@ -26,13 +23,7 @@ void AClairCharacter::BeginPlay()
 
 	ClairAbilitySystemComp->Initialize(this, this);
 	AttributeComp->Initialize(ClairAbilitySystemComp);
-	ClairAbilitySystemComp->AbilityEndedCallbacks.AddUObject(this, &ThisClass::OnGameplayAbilityEnded);
-
-	TArray<AActor*> TurnCharacters;
-	UGameplayStatics::GetAllActorsWithInterface(GetWorld(), UTurnCharacterInterface::StaticClass(), TurnCharacters);
-	check(TurnCharacters.IsValidIndex(0));
-	UE_LOG(ClairLog, Display, TEXT("Target - speed: %f"), ITurnCharacterInterface::Execute_GetSpeed(TurnCharacters[0]));
-	ClairAbilitySystemComp->CurrentTarget = TurnCharacters[0];
+	ClairAbilitySystemComp->AbilityEndedCallbacks.AddUObject(this, &ThisClass::AbilityEndedHandler);
 }
 
 UAbilitySystemComponent* AClairCharacter::GetAbilitySystemComponent() const
@@ -45,18 +36,14 @@ float AClairCharacter::GetSpeed_Implementation() const
 	return AttributeComp->GetSpeed();
 }
 
-void AClairCharacter::PlayTurn_Implementation()
+void AClairCharacter::TakeTurn_Implementation()
 {
-	UE_LOG(ClairLog, Display, TEXT("TakeTurn_Implementation - speed: %f"), GetSpeed_Implementation());
-}
-
-UTurnDelegate* AClairCharacter::GetOnTurnEndedDelegate_Implementation()
-{	
-	return OnTurnEnded;
+	//UE_LOG(ClairLog, Display, TEXT("TakeTurn_Implementation - speed: %f"), GetSpeed_Implementation());
 }
 
 // Ends turn when a gameplay ability has been finished
-void AClairCharacter::OnGameplayAbilityEnded(UGameplayAbility* GameplayAbility)
+void AClairCharacter::AbilityEndedHandler(UGameplayAbility* GameplayAbility)
 {
-	OnTurnEnded->Delegate.Broadcast();
+	UTurnManagerSubsystem* TurnManagerSubsystem = GetGameInstance()->GetSubsystem<UTurnManagerSubsystem>();
+	TurnManagerSubsystem->EndTurn();
 }

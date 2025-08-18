@@ -25,9 +25,5 @@ public:
 	float GetSpeed() const;
 
 	UFUNCTION(BlueprintNativeEvent)
-	void PlayTurn();
-
-	// Get Delegate when a character turn ends
-	UFUNCTION(BlueprintNativeEvent)
-	UTurnDelegate* GetOnTurnEndedDelegate();
+	void TakeTurn();
 };

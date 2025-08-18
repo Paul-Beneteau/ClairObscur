@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "GameplayTagContainer.h"
 #include "ClairObscur/GameMode/TurnCharacterInterface.h"
-#include "ClairObscur/GameMode/TurnDelegate.h"
 #include "GameFramework/Character.h"
 #include "ClairCharacter.generated.h"
 
@@ -21,10 +21,7 @@ class CLAIROBSCUR_API AClairCharacter : public ACharacter, public IAbilitySystem
 
 public:
 	UPROPERTY(BlueprintReadWrite)
-	bool bIsMoving { false };
-
-	UPROPERTY(BlueprintReadWrite)
-	bool bIsWalkingBackward { false };
+	FGameplayTagContainer GameplayTags;
 	
 	AClairCharacter();
 
@@ -33,8 +30,7 @@ public:
 
 	// Implements ITurnCharacterInterface
 	virtual float GetSpeed_Implementation() const override;
-	virtual void PlayTurn_Implementation() override;
-	virtual UTurnDelegate* GetOnTurnEndedDelegate_Implementation() override;
+	virtual void TakeTurn_Implementation() override;
 	
 protected:
 	// GAS Components
@@ -44,14 +40,10 @@ protected:
 	TObjectPtr<UClairAttributeSet> ClairAttributeSet;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UClairAttributeComp> AttributeComp;
-
-	// Callback when a turn is finished. Used by the TurnManagerSubsystem
-	UPROPERTY()
-	TObjectPtr<UTurnDelegate> OnTurnEnded;
 	
 	virtual void BeginPlay() override;
 
 	// Callback when a gameplay ability ends
-	void OnGameplayAbilityEnded(UGameplayAbility* GameplayAbility);
+	virtual void AbilityEndedHandler(UGameplayAbility* GameplayAbility);
 
 };

@@ -7,6 +7,8 @@
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "TurnManagerSubsystem.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FTurnDelegate);
+
 // Used to store an actor with TurnCharacterInterface and his number of turns per round
 USTRUCT()
 struct FTurnCharacter
@@ -33,9 +35,13 @@ class CLAIROBSCUR_API UTurnManagerSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 	
 public:
-	// Initializes class members then characters managed by the TurnManager takes their turn in the order computed
-	// from their speed.
+	void Initialize();
+	
+	// Start first character turn
 	void Start();
+
+	// Ends the turn of the current character
+	void EndTurn();
 	
 protected:
 	// Contains every actor that implements TurnCharacterInterface in the world 
@@ -51,6 +57,10 @@ protected:
 	UPROPERTY()
 	AActor* SlowestCharacter { nullptr };
 
+	// Event called when a character turn ends
+	UPROPERTY()
+	FTurnDelegate OnTurnEnded;
+	
 	// Next character in queue takes his turn
 	UFUNCTION()
 	void StartNextTurn();
@@ -65,7 +75,6 @@ protected:
 	void InitTurnQueue();
 
 	AActor* DeQueueCharacter();	
-	// Queue next character in the FIFO TurnQueue. Return the queued character
 	AActor* EnQueueCharacter();
 
 	// Is this the end of a round after the character takes his turn

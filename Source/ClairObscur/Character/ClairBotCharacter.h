@@ -16,12 +16,10 @@ class UClairAttributeSet;
 class UClairAbilitySystemComponent;
 
 UCLASS()
-class CLAIROBSCUR_API AClairBotCharacter : public AClairCharacter//, public ITurnCharacterInterface
+class CLAIROBSCUR_API AClairBotCharacter : public AClairCharacter
 {
 	GENERATED_BODY()
 
 public:
-	virtual void PlayTurn_Implementation() override;
-	
-protected:
+	virtual void TakeTurn_Implementation() override;
 };

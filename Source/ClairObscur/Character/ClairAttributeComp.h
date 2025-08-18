@@ -48,6 +48,6 @@ protected:
 	TObjectPtr<const UClairAttributeSet> ClairAttributeSet;
 	
 	// Initialize attribute value with a gameplay effect
-	UPROPERTY(EditAnywhere, Category = "Initialization")
+	UPROPERTY(EditAnywhere, Category = "Attributes")
 	TSubclassOf<UGameplayEffect> InitialGameplayEffect;
 };

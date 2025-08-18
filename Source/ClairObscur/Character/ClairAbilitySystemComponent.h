@@ -4,18 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
+#include "ClairPlayerInputs.h"
 #include "ClairAbilitySystemComponent.generated.h"
 
 class UClairAttributeSet;
-
-// Links a gameplay ability with an input ID used to create or activate the ability
-
-UENUM(BlueprintType)
-enum class EAbilityInputID : uint8
-{
-	None = 0 UMETA(Hidden),
-	PrimaryAttack = 1,
-}; 
 
 USTRUCT()
 struct FClairAbility
@@ -27,7 +19,11 @@ public:
 	TSubclassOf<UGameplayAbility> GameplayAbility;
 
 	UPROPERTY(EditDefaultsOnly)
-	EAbilityInputID InputID { 0 };
+	EAbilityInputID InputID { EAbilityInputID::None };
+	
+	// Gameplay event tag that activate the ability by sending an event
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag GameplayEventTag { FGameplayTag::EmptyTag };
 };
 
 UCLASS()
@@ -38,16 +34,12 @@ class CLAIROBSCUR_API UClairAbilitySystemComponent : public UAbilitySystemCompon
 public:
 	void Initialize(AActor* InOwnerActor, AActor* InAvatarActor);
 
-	void StartAbility(const EAbilityInputID InputID);
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	AActor* CurrentTarget { nullptr };
+	void ActivateAbilityOnTarget(const EAbilityInputID InputID, AActor* Target);
 	
 protected:
-
-	// Contains gameplay abilities with their associated input key
-	UPROPERTY(EditDefaultsOnly, Category = "Input")
-	TArray<FClairAbility> ClairAbilitySet;
-
-	TMap<EAbilityInputID, FGameplayAbilitySpecHandle> AbilitySpecHandles;
+	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
+	TArray<FClairAbility> InitialAbilities;
+	
+	// Ability handles used to activate abilities
+	TMap<EAbilityInputID, FGameplayAbilitySpecHandle> AbilityHandles;
 };

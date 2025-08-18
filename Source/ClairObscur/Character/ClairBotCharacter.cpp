@@ -2,13 +2,13 @@
 
 
 #include "ClairBotCharacter.h"
-#include "ClairAbilitySystemComponent.h"
-#include "ClairAttributeComp.h"
 #include "ClairObscur/ClairGameStatics.h"
+#include "ClairObscur/GameMode/TurnManagerSubsystem.h"
 
-void AClairBotCharacter::PlayTurn_Implementation()
+void AClairBotCharacter::TakeTurn_Implementation()
 {
-	UE_LOG(ClairLog, Display, TEXT("Bot TakeTurn_Implementation - speed: %f"), GetSpeed_Implementation());
-	// TODO: Parametrize the ability used
-	ClairAbilitySystemComp->StartAbility(EAbilityInputID::PrimaryAttack);
+	UE_LOG(ClairLog, Display, TEXT("Bot: TakeTurn_Implementation - speed: %f"), GetSpeed_Implementation());
+
+	UTurnManagerSubsystem* TurnManagerSubsystem = GetGameInstance()->GetSubsystem<UTurnManagerSubsystem>();
+	TurnManagerSubsystem->EndTurn();
 }

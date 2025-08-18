@@ -4,18 +4,30 @@
 #include "TurnManagerSubsystem.h"
 
 #include "TurnCharacterInterface.h"
-#include "TurnDelegate.h"
 #include "ClairObscur/ClairGameStatics.h"
 #include "Kismet/GameplayStatics.h"
 
-void UTurnManagerSubsystem::Start()
+// Initializes class members and binds OnTurnEnded delegates
+void UTurnManagerSubsystem::Initialize()
 {
 	InitCharacters();
 	InitSlowestCharacter();	
 	InitTurnsPerRound();	
 	InitTurnQueue();
 
+	// Call StartNextTurn() when a character turn ends
+	OnTurnEnded.AddDynamic(this, &UTurnManagerSubsystem::StartNextTurn);
+}
+
+void UTurnManagerSubsystem::Start()
+{		
 	StartNextTurn();
+}
+
+// Call StartNextTurn() with OnTurnEnded delegate
+void UTurnManagerSubsystem::EndTurn()
+{
+	OnTurnEnded.Broadcast();
 }
 
 // Dequeue a character that takes his turn then enqueue another character. Updates character remaining turns per round
@@ -23,16 +35,22 @@ void UTurnManagerSubsystem::Start()
 void UTurnManagerSubsystem::StartNextTurn()
 {
 	AActor* DequeuedCharacter = DeQueueCharacter();
-	ITurnCharacterInterface::Execute_PlayTurn(DequeuedCharacter);
-	
+
+	if (DequeuedCharacter == nullptr)
+	{
+		UE_LOG(ClairLog, Warning, TEXT("TurnManagerSubsystem: DequeuedCharacter is null"));
+		return;
+	}
+		
 	if (IsEndOfRound(EnQueueCharacter()))
 	{
 		UpdateRemainingTurnsPerRound();
 	}
+
+	ITurnCharacterInterface::Execute_TakeTurn(DequeuedCharacter);
 }
 
-// Retrieves actors in the world that implements TurnCharacterInterface in Characters class member. Binds character
-// OnTurnEnded delegate with StartNextTurn() callback
+// Retrieves actors in the world that implements TurnCharacterInterface in Characters class member.
 void UTurnManagerSubsystem::InitCharacters()
 {
 	TArray<AActor*> TurnCharacters;
@@ -47,10 +65,6 @@ void UTurnManagerSubsystem::InitCharacters()
 	for (AActor* TurnCharacter : TurnCharacters)
 	{
 		Characters.Emplace(FTurnCharacter { TurnCharacter });
-		
-		UTurnDelegate* OnTurnEnded { ITurnCharacterInterface::Execute_GetOnTurnEndedDelegate(TurnCharacter) };
-		// Call StartNextTurn() when the character turn is ended
-		OnTurnEnded->Delegate.AddDynamic(this, &UTurnManagerSubsystem::StartNextTurn);
 	}
 }
 

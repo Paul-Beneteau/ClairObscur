@@ -10,5 +10,6 @@ void AClairGameModeBase::StartPlay()
 	Super::StartPlay();
 
 	UTurnManagerSubsystem* TurnManagerSubsystem = GetGameInstance()->GetSubsystem<UTurnManagerSubsystem>();
-	//TurnManagerSubsystem->Start();
+	TurnManagerSubsystem->Initialize();
+	TurnManagerSubsystem->Start();
 }
