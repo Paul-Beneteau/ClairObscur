@@ -6,6 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "ClairCharacter.h"
+#include "ClairPlayerCharacter.h"
 #include "ClairObscur/GameMode/TurnCharacterInterface.h"
 #include "GameFramework/Character.h"
 #include "ClairBotCharacter.generated.h"
@@ -22,4 +23,8 @@ class CLAIROBSCUR_API AClairBotCharacter : public AClairCharacter
 
 public:
 	virtual void TakeTurn_Implementation() override;
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category="Abilities")
+	EAbilityInputID PrimaryAttack { EAbilityInputID::PrimaryAttack };
 };

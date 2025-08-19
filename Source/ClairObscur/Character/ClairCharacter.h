@@ -22,6 +22,13 @@ class CLAIROBSCUR_API AClairCharacter : public ACharacter, public IAbilitySystem
 public:
 	UPROPERTY(BlueprintReadWrite)
 	FGameplayTagContainer GameplayTags;
+
+	// Character Head Icon used by UI
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
+	UMaterial* Icon;
+	//UTexture2D* Icon;
+
+
 	
 	AClairCharacter();
 

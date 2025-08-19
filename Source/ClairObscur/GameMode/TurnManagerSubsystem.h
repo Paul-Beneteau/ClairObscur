@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Containers/SpscQueue.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "TurnManagerSubsystem.generated.h"
 
@@ -35,32 +34,38 @@ class CLAIROBSCUR_API UTurnManagerSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 	
 public:
+	// Event called when a character turn ends
+	UPROPERTY(BlueprintAssignable)
+	FTurnDelegate OnTurnEnded;
+
+
+	void PrintQueue();
 	void Initialize();
 	
 	// Start first character turn
 	void Start();
 
 	// Ends the turn of the current character
-	void EndTurn();
+	void EndTurn() const;
+
+	UFUNCTION(BlueprintCallable)
+	const TArray<AActor*>& GetTurnQueue() const { return TurnQueue; };
 	
 protected:
 	// Contains every actor that implements TurnCharacterInterface in the world 
 	UPROPERTY()
 	TArray<FTurnCharacter> Characters;
 
-	// FIFO that Contains next TurnCharacters that will take turn
-	TSpscQueue<AActor*> TurnQueue;
-
+	UPROPERTY()
+	// LIFO that Contains next TurnCharacters that will take turn.
+	TArray<AActor*> TurnQueue;
+	
 	int32 TurnQueueSize { 6 };
 
 	// Saves the slowest character used to compute the number of turn per round of each character
 	UPROPERTY()
 	AActor* SlowestCharacter { nullptr };
 
-	// Event called when a character turn ends
-	UPROPERTY()
-	FTurnDelegate OnTurnEnded;
-	
 	// Next character in queue takes his turn
 	UFUNCTION()
 	void StartNextTurn();

@@ -9,7 +9,7 @@
 
 // Initializes class members and binds OnTurnEnded delegates
 void UTurnManagerSubsystem::Initialize()
-{
+{	
 	InitCharacters();
 	InitSlowestCharacter();	
 	InitTurnsPerRound();	
@@ -20,14 +20,15 @@ void UTurnManagerSubsystem::Initialize()
 }
 
 void UTurnManagerSubsystem::Start()
-{		
-	StartNextTurn();
+{
+	// Send Turn ended event instead of StartNextTurn() call to initialize UI
+	OnTurnEnded.Broadcast();
 }
 
 // Call StartNextTurn() with OnTurnEnded delegate
-void UTurnManagerSubsystem::EndTurn()
+void UTurnManagerSubsystem::EndTurn() const
 {
-	OnTurnEnded.Broadcast();
+	OnTurnEnded.Broadcast();	
 }
 
 // Dequeue a character that takes his turn then enqueue another character. Updates character remaining turns per round
@@ -121,7 +122,16 @@ void UTurnManagerSubsystem::InitTurnQueue()
 
 AActor* UTurnManagerSubsystem::DeQueueCharacter()
 {
-	return TurnQueue.Dequeue().Get(nullptr);
+	if (TurnQueue.IsValidIndex(0) == false)
+	{
+		return nullptr;
+	}
+	
+	AActor* DequeuedCharacter = TurnQueue[0];
+	
+	TurnQueue.RemoveAt(0);
+	
+	return DequeuedCharacter;
 }
 
 // Enqueue the character with the hightest TurnsPerRound which will be next character to take turn after all characters
@@ -145,7 +155,7 @@ AActor* UTurnManagerSubsystem::EnQueueCharacter()
 	// Subtracts 1 to RemainingTurnsPerRound because the queued character will take a turn
 	*HighestTurnsPerRound = *HighestTurnsPerRound - 1;
 	
-	TurnQueue.Enqueue(QueuedCharacter);
+	TurnQueue.Add(QueuedCharacter);
 	
 	return QueuedCharacter;
 }
