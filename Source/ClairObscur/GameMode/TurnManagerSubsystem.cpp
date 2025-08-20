@@ -7,45 +7,80 @@
 #include "ClairObscur/ClairGameStatics.h"
 #include "Kismet/GameplayStatics.h"
 
-// Initializes class members and binds OnTurnEnded delegates
-void UTurnManagerSubsystem::Initialize()
-{	
+void UTurnManagerSubsystem::Start()
+{
+	// Get Characters in world and compute their turns per round used to get the turn order and fill the queue
 	GetCharacters();
 	GetSlowestCharacter();	
 	ComputeTurnsPerRound();	
 	FillTurnQueue();
-
+	
 	// Call StartNextTurn() when a character turn ends
-	OnTurnEnded.AddDynamic(this, &UTurnManagerSubsystem::StartNextTurn);
-}
-
-// Call StartNextTurn() with OnTurnEnded delegate
-void UTurnManagerSubsystem::Start() const
-{
+	OnTurnEnded.AddUniqueDynamic(this, &UTurnManagerSubsystem::StartNextTurn);
+	
 	// Send Turn ended event instead of StartNextTurn() call to initialize UI
 	OnTurnEnded.Broadcast();
 }
 
 void UTurnManagerSubsystem::EndTurn() const
 {
+	// Call StartNextTurn()
 	OnTurnEnded.Broadcast();
 }
 
-void UTurnManagerSubsystem::ResetTurnOrder()
+void UTurnManagerSubsystem::Pause()
+{
+	// Remove StartNextTurn() binding so that next character won't take his turn
+	OnTurnEnded.RemoveAll(this);
+}
+
+void UTurnManagerSubsystem::Pause(const float UnpauseDelay)
+{
+	OnTurnEnded.RemoveAll(this);
+
+	FTimerHandle TimerHandle;
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &UTurnManagerSubsystem::Unpause, UnpauseDelay, false);
+}
+
+void UTurnManagerSubsystem::Unpause()
+{
+	// Call StartNextTurn() when a character turn ends
+	OnTurnEnded.AddUniqueDynamic(this, &UTurnManagerSubsystem::StartNextTurn);
+	
+	// Send Turn ended event instead of StartNextTurn() call to initialize UI
+	OnTurnEnded.Broadcast();
+}
+
+void UTurnManagerSubsystem::ResetTurnQueue()
 {
 	TurnQueue.Reset();
+	
 	GetCharacters();
 	GetSlowestCharacter();	
-	ComputeTurnsPerRound();	
+	ComputeTurnsPerRound();
+	
 	FillTurnQueue();
-	Start();
+}
+
+void UTurnManagerSubsystem::RemoveCharacter(const AActor* InCharacter)
+{	
+	Characters.RemoveAll([&](const FTurnCharacter TurnCharacter)
+	{
+		return TurnCharacter.Actor == InCharacter;
+	});
+
+	TurnQueue.RemoveAll([&](const AActor* TurnQueueCharacter)
+	{
+		return TurnQueueCharacter == InCharacter;
+	});
+	
+	FillTurnQueue();
 }
 
 // Dequeue a character that takes his turn then enqueue another character. Updates character remaining turns per round
 // if this is the end of a round
 void UTurnManagerSubsystem::StartNextTurn()
 {
-	PrintQueue();
 	AActor* DequeuedCharacter = DeQueueCharacter();
 
 	if (DequeuedCharacter == nullptr)
@@ -126,7 +161,7 @@ void UTurnManagerSubsystem::ComputeTurnsPerRound()
 // Fill the TurnQueue with firsts characters that takes turn. Number of characters is defined by TurnQueueSize
 void UTurnManagerSubsystem::FillTurnQueue()
 {
-	for (int32 i = 0; i < TurnQueueSize; i++)
+	for (int32 i = TurnQueue.Num(); i < TurnQueueSize; i++)
 	{
 		const AActor* NextTurnCharacter = EnQueueCharacter();
 		

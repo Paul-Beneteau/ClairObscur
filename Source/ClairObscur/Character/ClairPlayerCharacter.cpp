@@ -57,13 +57,11 @@ void AClairPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		InputComp->BindAction(Ability.InputAction, ETriggerEvent::Started, this,
 			&AClairPlayerCharacter::SelectAbilityHandler, Ability.InputID);
 	}
-
 }
 
 // Loads input context to select an ability and wait for the player input 
 void AClairPlayerCharacter::TakeTurn_Implementation()
 {
-	UE_LOG(ClairLog, Display, TEXT("Player: TakeTurn_Implementation - speed: %f"), GetSpeed_Implementation());
 	InputSubsystem->AddMappingContext(Inputs->SelectAbilityContext, 0);
 
 	// Send Event to add menu that select ability in HUD

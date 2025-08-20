@@ -37,18 +37,26 @@ public:
 	// Event called when a character turn ends
 	UPROPERTY(BlueprintAssignable)
 	FTurnDelegate OnTurnEnded;
-
-	void Initialize();
+		
+	// Fill turn queue and start first turn
+	void Start();
 	
-	// Start first character turn
-	void Start() const;
-
 	// Ends the turn of the current character
 	void EndTurn() const;
+	
+	// Pause the system after the current character turn 
+	void Pause();
+	// Pause and start next turn after a delay
+	void Pause(const float UnpauseDelay);
 
-	// Recompute the turn order. It should be used if a character in the turn queue is getting destroyed.
-	void ResetTurnOrder();
+	UFUNCTION()
+	void Unpause();	
+	
+	void ResetTurnQueue();
 
+	// Remove Character from turn queue and from future turn enqueue
+	void RemoveCharacter(const AActor* InCharacter);
+	
 	UFUNCTION(BlueprintCallable)
 	const TArray<AActor*>& GetTurnQueue() const { return TurnQueue; };
 	
@@ -66,7 +74,7 @@ protected:
 	// Saves the slowest character used to compute the number of turn per round of each character
 	UPROPERTY()
 	AActor* SlowestCharacter { nullptr };
-
+	
 	// Next character in queue takes his turn
 	UFUNCTION()
 	void StartNextTurn();

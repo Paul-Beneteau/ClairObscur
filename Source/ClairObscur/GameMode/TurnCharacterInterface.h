@@ -7,6 +7,7 @@
 #include "TurnCharacterInterface.generated.h"
 
 class UTurnDelegate;
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UTurnCharacterInterface : public UInterface

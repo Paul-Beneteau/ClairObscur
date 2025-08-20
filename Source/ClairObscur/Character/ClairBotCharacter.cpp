@@ -9,13 +9,16 @@
 
 void AClairBotCharacter::TakeTurn_Implementation()
 {
-	UE_LOG(ClairLog, Display, TEXT("Bot: TakeTurn_Implementation - speed: %f"), GetSpeed_Implementation());
-
 	// TODO: Target selection for multiple players
-	AActor* Player = GetWorld()->GetFirstPlayerController()->GetCharacter();
 	
-	ClairAbilitySystemComp->ActivateAbilityOnTarget(PrimaryAttack, Player);
-	
-	//UTurnManagerSubsystem* TurnManagerSubsystem = GetGameInstance()->GetSubsystem<UTurnManagerSubsystem>();
-	//TurnManagerSubsystem->EndTurn();
+	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
+	{
+		ClairAbilitySystemComp->ActivateAbilityOnTarget(PrimaryAttack, PlayerController->GetCharacter());
+	}
+
+	// TODO remove comments used to debug
+	/*if (UTurnManagerSubsystem* TurnManagerSubsystem = GetGameInstance()->GetSubsystem<UTurnManagerSubsystem>())
+	{
+		TurnManagerSubsystem->EndTurn();
+	}*/
 }

@@ -19,7 +19,8 @@ void UClairWorldUserWidget::NativeTick(const FGeometry& MyGeometry, float InDelt
 	}
 
 	FVector2D ScreenPos;
-	const bool bIsOnScreen { UGameplayStatics::ProjectWorldToScreen(GetOwningPlayer(), AttachedActor->GetActorLocation(), ScreenPos) };
+	const bool bIsOnScreen { UGameplayStatics::ProjectWorldToScreen(GetOwningPlayer(),
+		AttachedActor->GetActorLocation(), ScreenPos) };
 	
 	if (bIsOnScreen)
 	{
@@ -41,7 +42,8 @@ void UClairWorldUserWidget::NativeTick(const FGeometry& MyGeometry, float InDelt
 	}
 	else
 	{
-		// Hide Widget that still appears in the corner of the screen when it is behind the player in the world and should not be visible.
+		// Hide Widget that still appears in the corner of the screen when it is behind the player in the world and
+		// should not be visible.
 		ParentSizeBox->SetVisibility(ESlateVisibility::Hidden);
 	}
 

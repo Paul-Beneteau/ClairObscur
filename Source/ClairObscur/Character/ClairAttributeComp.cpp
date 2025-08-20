@@ -50,10 +50,10 @@ void UClairAttributeComp::HandleHealthChanged(AActor* Instigator, float OldValue
 
 	// If the character died
 	if (NewValue == 0.0f && NewValue != OldValue)
-	{			
+	{
 		ACharacter* Character = CastChecked<ACharacter>(GetOwner());
-
-		Character->SetLifeSpan(3.5f);
+		
+		Character->SetLifeSpan(OnDeathDestroyActorDelay);
 		
 		if (DeathAnim)
 		{			
@@ -63,14 +63,24 @@ void UClairAttributeComp::HandleHealthChanged(AActor* Instigator, float OldValue
 		{
 			UE_LOG(ClairLog, Warning, TEXT("ClairAttributeComp: Death anim montage has not been set"));
 		}
-		
-		if (APlayerController* PlayerController { Cast<APlayerController>(Character->GetInstigatorController()) })
-		{
-			Character->DisableInput(PlayerController);
-		}
 
-		UTurnManagerSubsystem* TurnManagerSubsystem = Character->GetGameInstance()->GetSubsystem<UTurnManagerSubsystem>();
-		TurnManagerSubsystem->ResetTurnOrder();
+		// Remove character from TurnManagerSubsystem and pause it to wait for death animation or end of combat
+		if (UTurnManagerSubsystem* TurnManagerSubsystem = Character->GetGameInstance()->GetSubsystem<UTurnManagerSubsystem>())
+		{
+			if (APlayerController* PlayerController { Cast<APlayerController>(Character->GetInstigatorController()) })
+			{
+				Character->DisableInput(PlayerController);				
+				TurnManagerSubsystem->Pause();			
+			}
+			else
+			{
+				TurnManagerSubsystem->Pause(OnDeathDestroyActorDelay);	
+			}
+			
+			TurnManagerSubsystem->RemoveCharacter(GetOwner());
+		}
+		
+		OnDeath.Broadcast();
 	}
 }
 

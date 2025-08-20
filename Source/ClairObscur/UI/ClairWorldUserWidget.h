@@ -8,9 +8,6 @@
 
 class USizeBox;
 
-/**
- * 
- */
 UCLASS()
 class CLAIROBSCUR_API UClairWorldUserWidget : public UUserWidget
 {
