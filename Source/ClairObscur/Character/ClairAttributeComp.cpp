@@ -1,5 +1,9 @@
 #include "ClairAttributeComp.h"
 
+#include "ClairObscur/ClairGameStatics.h"
+#include "ClairObscur/GameMode/TurnManagerSubsystem.h"
+#include "GameFramework/Character.h"
+
 void UClairAttributeComp::Initialize(UClairAbilitySystemComponent* InAbilitySystemComp)
 {
 	AActor* Owner = GetOwner();
@@ -7,24 +11,21 @@ void UClairAttributeComp::Initialize(UClairAbilitySystemComponent* InAbilitySyst
 
 	if (ClairAbilitySystemComp)
 	{
-		UE_LOG(LogTemp, Error, TEXT("ClairAttributeComp: attribute component for owner [%s] has already been"
-			   " initialized with an ability system."), *GetNameSafe(Owner));
+		UE_LOG(ClairLog, Error, TEXT("ClairAttributeComp: cannot initialize because ClairAbilitySystemComp already exist"));
 		return;
 	}
 
 	ClairAbilitySystemComp = InAbilitySystemComp;
 	if (!ClairAbilitySystemComp)
 	{
-		UE_LOG(LogTemp, Error, TEXT("ClairAttributeComp: Cannot initialize attribute component for owner [%s]"
-			   " with NULL ability system."), *GetNameSafe(Owner));
+		UE_LOG(ClairLog, Error, TEXT("ClairAttributeComp: ClairAbilitySystemComp given for initialization is null"));
 		return;
 	}
 	
 	ClairAttributeSet = ClairAbilitySystemComp->GetSet<UClairAttributeSet>();
 	if (!ClairAttributeSet)
 	{
-		UE_LOG(LogTemp, Error, TEXT("ClairAttributeComp: Cannot initialize Attribute component for owner [%s]"
-			   " with NULL attribute set on the ability system."), *GetNameSafe(Owner));
+		UE_LOG(ClairLog, Error, TEXT("ClairAttributeComp: ClairAttributeSet is null"));
 		return;
 	}
 
@@ -34,8 +35,7 @@ void UClairAttributeComp::Initialize(UClairAbilitySystemComponent* InAbilitySyst
 
 	if (!InitialGameplayEffect)
 	{
-		UE_LOG(LogTemp, Error, TEXT("ClairAttributeComp: Cannot initialize Attribute component for owner [%s]"
-			   " with NULL initial gameplay effect"), *GetNameSafe(Owner));
+		UE_LOG(ClairLog, Error, TEXT("ClairAttributeComp: initial gameplay effect has not been set"));
 		return;
 	}
 	
@@ -47,6 +47,31 @@ void UClairAttributeComp::Initialize(UClairAbilitySystemComponent* InAbilitySyst
 void UClairAttributeComp::HandleHealthChanged(AActor* Instigator, float OldValue, float NewValue)
 {
 	OnHealthChanged.Broadcast(this, Instigator, OldValue, NewValue);
+
+	// If the character died
+	if (NewValue == 0.0f && NewValue != OldValue)
+	{			
+		ACharacter* Character = CastChecked<ACharacter>(GetOwner());
+
+		Character->SetLifeSpan(3.5f);
+		
+		if (DeathAnim)
+		{			
+			Character->PlayAnimMontage(DeathAnim);	
+		}
+		else
+		{
+			UE_LOG(ClairLog, Warning, TEXT("ClairAttributeComp: Death anim montage has not been set"));
+		}
+		
+		if (APlayerController* PlayerController { Cast<APlayerController>(Character->GetInstigatorController()) })
+		{
+			Character->DisableInput(PlayerController);
+		}
+
+		UTurnManagerSubsystem* TurnManagerSubsystem = Character->GetGameInstance()->GetSubsystem<UTurnManagerSubsystem>();
+		TurnManagerSubsystem->ResetTurnOrder();
+	}
 }
 
 void UClairAttributeComp::HandleActionPointsChanged(AActor* Instigator, float OldValue, float NewValue)

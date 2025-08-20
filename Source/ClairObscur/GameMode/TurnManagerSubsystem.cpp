@@ -10,31 +10,42 @@
 // Initializes class members and binds OnTurnEnded delegates
 void UTurnManagerSubsystem::Initialize()
 {	
-	InitCharacters();
-	InitSlowestCharacter();	
-	InitTurnsPerRound();	
-	InitTurnQueue();
+	GetCharacters();
+	GetSlowestCharacter();	
+	ComputeTurnsPerRound();	
+	FillTurnQueue();
 
 	// Call StartNextTurn() when a character turn ends
 	OnTurnEnded.AddDynamic(this, &UTurnManagerSubsystem::StartNextTurn);
 }
 
-void UTurnManagerSubsystem::Start()
+// Call StartNextTurn() with OnTurnEnded delegate
+void UTurnManagerSubsystem::Start() const
 {
 	// Send Turn ended event instead of StartNextTurn() call to initialize UI
 	OnTurnEnded.Broadcast();
 }
 
-// Call StartNextTurn() with OnTurnEnded delegate
 void UTurnManagerSubsystem::EndTurn() const
 {
-	OnTurnEnded.Broadcast();	
+	OnTurnEnded.Broadcast();
+}
+
+void UTurnManagerSubsystem::ResetTurnOrder()
+{
+	TurnQueue.Reset();
+	GetCharacters();
+	GetSlowestCharacter();	
+	ComputeTurnsPerRound();	
+	FillTurnQueue();
+	Start();
 }
 
 // Dequeue a character that takes his turn then enqueue another character. Updates character remaining turns per round
 // if this is the end of a round
 void UTurnManagerSubsystem::StartNextTurn()
 {
+	PrintQueue();
 	AActor* DequeuedCharacter = DeQueueCharacter();
 
 	if (DequeuedCharacter == nullptr)
@@ -42,7 +53,7 @@ void UTurnManagerSubsystem::StartNextTurn()
 		UE_LOG(ClairLog, Warning, TEXT("TurnManagerSubsystem: DequeuedCharacter is null"));
 		return;
 	}
-		
+	
 	if (IsEndOfRound(EnQueueCharacter()))
 	{
 		UpdateRemainingTurnsPerRound();
@@ -52,25 +63,31 @@ void UTurnManagerSubsystem::StartNextTurn()
 }
 
 // Retrieves actors in the world that implements TurnCharacterInterface in Characters class member.
-void UTurnManagerSubsystem::InitCharacters()
+void UTurnManagerSubsystem::GetCharacters()
 {
 	TArray<AActor*> TurnCharacters;
 	UGameplayStatics::GetAllActorsWithInterface(GetWorld(), UTurnCharacterInterface::StaticClass(), TurnCharacters);
-
+	
 	if (TurnCharacters.IsEmpty())
 	{
 		UE_LOG(ClairLog, Warning, TEXT("TurnManagerSubsystem: There isn't any character implementing ITurnCharacterInterface in the world"));
 		return;
 	}
+
+	Characters.Reset();
 	
 	for (AActor* TurnCharacter : TurnCharacters)
 	{
-		Characters.Emplace(FTurnCharacter { TurnCharacter });
+		// If character isn't dying
+		if (TurnCharacter->GetLifeSpan() == 0.0f)
+		{
+			Characters.Emplace(FTurnCharacter { TurnCharacter });			
+		}
 	}
 }
 
 // Find the slowest character and saves it in SlowestCharacter class member
-void UTurnManagerSubsystem::InitSlowestCharacter()
+void UTurnManagerSubsystem::GetSlowestCharacter()
 {
 	check(Characters.IsValidIndex(0));	
 	float SlowestSpeed = ITurnCharacterInterface::Execute_GetSpeed(Characters[0].Actor);
@@ -90,7 +107,7 @@ void UTurnManagerSubsystem::InitSlowestCharacter()
 // Computes numbers of turns per round for each character. A round consists of a series of turns where every
 // TurnCharacters takes at least one turn. This number of turn per round is equal to the character speed divided by
 // the slowest character speed.
-void UTurnManagerSubsystem::InitTurnsPerRound()
+void UTurnManagerSubsystem::ComputeTurnsPerRound()
 {
 	for (FTurnCharacter& Character : Characters)
 	{
@@ -107,7 +124,7 @@ void UTurnManagerSubsystem::InitTurnsPerRound()
 }
 
 // Fill the TurnQueue with firsts characters that takes turn. Number of characters is defined by TurnQueueSize
-void UTurnManagerSubsystem::InitTurnQueue()
+void UTurnManagerSubsystem::FillTurnQueue()
 {
 	for (int32 i = 0; i < TurnQueueSize; i++)
 	{
@@ -174,4 +191,13 @@ void UTurnManagerSubsystem::UpdateRemainingTurnsPerRound()
 	{			
 		Character.RemainingTurnsPerRound += Character.TurnsPerRound;
 	}	
+}
+
+void UTurnManagerSubsystem::PrintQueue()
+{
+	UE_LOG(ClairLog, Display, TEXT("UTurnManagerSubsystem::PrintQueue"));
+	for (AActor* Actor : TurnQueue)
+	{
+		UE_LOG(ClairLog, Display, TEXT("Character in queue: %s"), *GetNameSafe(Actor));
+	}
 }

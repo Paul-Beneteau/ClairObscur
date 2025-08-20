@@ -65,6 +65,9 @@ void AClairPlayerCharacter::TakeTurn_Implementation()
 {
 	UE_LOG(ClairLog, Display, TEXT("Player: TakeTurn_Implementation - speed: %f"), GetSpeed_Implementation());
 	InputSubsystem->AddMappingContext(Inputs->SelectAbilityContext, 0);
+
+	// Send Event to add menu that select ability in HUD
+	OnTurnStarted.Broadcast();
 }
 
 // Saves the selected ability and switch input context and HUD to select target. Loads targets and move camera to the
@@ -77,8 +80,9 @@ void AClairPlayerCharacter::SelectAbilityHandler(EAbilityInputID InputID)
 	InputSubsystem->RemoveMappingContext(Inputs->SelectAbilityContext);
 	InputSubsystem->AddMappingContext(Inputs->SelectTargetContext, 0);
 
-	// Change HUD
-
+	// Send Event to remove menu that select ability in HUD
+	OnAbilitySelected.Broadcast();
+	
 	// Get Targets
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AClairBotCharacter::StaticClass(),Targets);
 	check(Targets.IsValidIndex(0));
@@ -123,6 +127,9 @@ void AClairPlayerCharacter::ActivateAbilityHandler()
 {
 	InputSubsystem->RemoveMappingContext(Inputs->SelectTargetContext);
 
+	// Send Event to remove menu that select target in HUD
+	OnTargetSelected.Broadcast();
+	
 	// Moves camera to have a large view of the activated ability
 	CameraComp->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));	
 	CameraComp->SetWorldLocation(GetActorLocation() + ActivatedAbilityCameraOffset);

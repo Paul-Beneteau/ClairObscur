@@ -38,15 +38,16 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FTurnDelegate OnTurnEnded;
 
-
-	void PrintQueue();
 	void Initialize();
 	
 	// Start first character turn
-	void Start();
+	void Start() const;
 
 	// Ends the turn of the current character
 	void EndTurn() const;
+
+	// Recompute the turn order. It should be used if a character in the turn queue is getting destroyed.
+	void ResetTurnOrder();
 
 	UFUNCTION(BlueprintCallable)
 	const TArray<AActor*>& GetTurnQueue() const { return TurnQueue; };
@@ -70,14 +71,14 @@ protected:
 	UFUNCTION()
 	void StartNextTurn();
 	
-	// Initializes Characters class member with actors in the world that implements TurnCharacterInterface
-	void InitCharacters();	
+	// Fill Characters class member with actors in the world that implements TurnCharacterInterface
+	void GetCharacters();	
 	// Saves slowest character in SlowestCharacter class member
-	void InitSlowestCharacter();
+	void GetSlowestCharacter();
 	// Computes every character TurnsPerRound
-	void InitTurnsPerRound();	
+	void ComputeTurnsPerRound();	
 	// Initializes TurnQueue with first characters that will take turn
-	void InitTurnQueue();
+	void FillTurnQueue();
 
 	AActor* DeQueueCharacter();	
 	AActor* EnQueueCharacter();
@@ -87,4 +88,6 @@ protected:
 
 	// Update the remaining turn per round of every character. It should be used at the end of a round
 	void UpdateRemainingTurnsPerRound();
+	
+	void PrintQueue();
 };

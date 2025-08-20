@@ -26,9 +26,6 @@ public:
 	// Character Head Icon used by UI
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	UMaterial* Icon;
-	//UTexture2D* Icon;
-
-
 	
 	AClairCharacter();
 

@@ -50,4 +50,7 @@ protected:
 	// Initialize attribute value with a gameplay effect
 	UPROPERTY(EditAnywhere, Category = "Attributes")
 	TSubclassOf<UGameplayEffect> InitialGameplayEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TObjectPtr<UAnimMontage> DeathAnim;
 };

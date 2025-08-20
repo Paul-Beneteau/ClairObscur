@@ -21,6 +21,8 @@ class USpringArmComponent;
 class UInputAction;
 class UInputMappingContext;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FClairPlayerCharacterDelegate);
+
 UCLASS()
 class CLAIROBSCUR_API AClairPlayerCharacter : public AClairCharacter
 {
@@ -32,6 +34,13 @@ public:
 	TObjectPtr<UCameraComponent> CameraComp;	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	TObjectPtr<USpringArmComponent> SpringArmComp;
+
+	UPROPERTY(BlueprintAssignable)
+	FClairPlayerCharacterDelegate OnTurnStarted;
+	UPROPERTY(BlueprintAssignable)
+	FClairPlayerCharacterDelegate OnAbilitySelected;
+	UPROPERTY(BlueprintAssignable)
+	FClairPlayerCharacterDelegate OnTargetSelected;
 	
 	AClairPlayerCharacter();
 	
