@@ -20,7 +20,7 @@ class CLAIROBSCUR_API AClairCharacter : public ACharacter, public IAbilitySystem
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	FGameplayTagContainer GameplayTags;
 
 	// Character Head Icon used by UI

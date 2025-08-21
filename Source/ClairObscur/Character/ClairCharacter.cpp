@@ -42,7 +42,12 @@ void AClairCharacter::TakeTurn_Implementation()
 
 // Ends turn when a gameplay ability has been finished
 void AClairCharacter::AbilityEndedHandler(UGameplayAbility* GameplayAbility)
-{	
+{
+	if (GameplayAbility->GetCurrentAbilitySpec()->InputID == static_cast<int32>(EAbilityInputID::Dodge)) 
+	{
+		return;
+	}
+	
 	if (UTurnManagerSubsystem* TurnManagerSubsystem = GetGameInstance()->GetSubsystem<UTurnManagerSubsystem>())
 	{
 		TurnManagerSubsystem->EndTurn();

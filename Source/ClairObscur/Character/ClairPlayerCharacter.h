@@ -36,7 +36,9 @@ public:
 	TObjectPtr<USpringArmComponent> SpringArmComp;
 
 	UPROPERTY(BlueprintAssignable)
-	FPlayerDelegate OnTurnStarted;
+	FPlayerDelegate OnTurnStarted;	
+	UPROPERTY(BlueprintAssignable)
+	FPlayerDelegate OnTurnEnded;
 	UPROPERTY(BlueprintAssignable)
 	FPlayerDelegate OnAbilitySelected;
 	UPROPERTY(BlueprintAssignable)
@@ -70,6 +72,8 @@ protected:
 	
 	UPROPERTY()
 	TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;
+
+	void Dodge(EAbilityInputID InputID);
 	
 	// Get targets and sort them by their Y axis. Switch input and HUD to select target.
 	void SelectAbilityHandler(EAbilityInputID InputID);

@@ -16,6 +16,7 @@ enum class EAbilityInputID : uint8
 {
 	None = 0 UMETA(Hidden),
 	PrimaryAttack = 1,
+	Dodge = 2,
 };
 
 // Bind an input action with a gameplay ability input ID
@@ -41,6 +42,8 @@ public:
 	TObjectPtr<UInputMappingContext> SelectAbilityContext;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputMappingContext> SelectTargetContext;
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputMappingContext> DefenseAbilityContext;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> Move;

@@ -18,7 +18,7 @@ void UTurnManagerSubsystem::Start()
 	// Call StartNextTurn() when a character turn ends
 	OnTurnEnded.AddUniqueDynamic(this, &UTurnManagerSubsystem::StartNextTurn);
 	
-	// Send Turn ended event instead of StartNextTurn() call to initialize UI
+	// Send Turn ended event instead of StartNextTurn() call to initialize Turn Order UI
 	OnTurnEnded.Broadcast();
 }
 

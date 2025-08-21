@@ -31,7 +31,7 @@ void UClairAbilitySystemComponent::Initialize(AActor* InOwnerActor, AActor* InAv
 // Send en event with an event tag associated from an InputID in AbilityHandles. This event activates the associated
 // ability with the target as a parameter.
 void UClairAbilitySystemComponent::ActivateAbilityOnTarget(const EAbilityInputID InputID, AActor* Target)
-{	
+{
 	FGameplayAbilitySpec* AbilitySpec = FindAbilitySpecFromHandle(*AbilityHandles.Find(InputID));
 	check(AbilitySpec && AbilitySpec->GameplayEventData);
 

@@ -42,7 +42,8 @@ void AClairPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	check(InputSubsystem);
 	
 	InputSubsystem->ClearAllMappings();
-	
+	InputSubsystem->AddMappingContext(Inputs->DefenseAbilityContext, 0);
+
 	UEnhancedInputComponent* InputComp { CastChecked<UEnhancedInputComponent>(PlayerInputComponent) };
 	
 	// Binds input actions
@@ -54,18 +55,33 @@ void AClairPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	
 	for (FClairAbilityInput Ability : Inputs->Abilities)
 	{
-		InputComp->BindAction(Ability.InputAction, ETriggerEvent::Started, this,
-			&AClairPlayerCharacter::SelectAbilityHandler, Ability.InputID);
+		if (Ability.InputID == EAbilityInputID::Dodge)
+		{
+			InputComp->BindAction(Ability.InputAction, ETriggerEvent::Started, this,
+				&AClairPlayerCharacter::Dodge, Ability.InputID);
+		}
+		else
+		{
+			InputComp->BindAction(Ability.InputAction, ETriggerEvent::Started, this,
+				&AClairPlayerCharacter::SelectAbilityHandler, Ability.InputID);
+		}
 	}
 }
 
 // Loads input context to select an ability and wait for the player input 
 void AClairPlayerCharacter::TakeTurn_Implementation()
 {
+	InputSubsystem->RemoveMappingContext(Inputs->DefenseAbilityContext);
 	InputSubsystem->AddMappingContext(Inputs->SelectAbilityContext, 0);
 
 	// Send Event to add menu that select ability in HUD
 	OnTurnStarted.Broadcast();
+}
+
+void AClairPlayerCharacter::Dodge(EAbilityInputID InputID)
+{
+	CameraComp->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
+	ClairAbilitySystemComp->ActivateAbilityOnTarget(InputID, this);
 }
 
 // Saves the selected ability and switch input context and HUD to select target. Loads targets and move camera to the
@@ -137,13 +153,17 @@ void AClairPlayerCharacter::ActivateAbilityHandler()
 }
 
 void AClairPlayerCharacter::AbilityEndedHandler(UGameplayAbility* GameplayAbility)
-{
+{	
+	InputSubsystem->AddMappingContext(Inputs->DefenseAbilityContext, 0);
+	
 	// Moves camera to his original position
 	CameraComp->AttachToComponent(SpringArmComp, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, false));
 	CameraComp->SetRelativeRotation(FRotator(-20.0, 0.0, 0.0).Quaternion());
 
 	// Reset target
 	CurrentTargetIndex = 0;
+
+	OnTurnEnded.Broadcast();
 	
 	Super::AbilityEndedHandler(GameplayAbility);
 }
