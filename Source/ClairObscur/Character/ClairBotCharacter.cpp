@@ -10,6 +10,7 @@
 void AClairBotCharacter::TakeTurn_Implementation()
 {
 	// TODO: Target selection for multiple players
+	Super::TakeTurn_Implementation();
 	
 	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 	{

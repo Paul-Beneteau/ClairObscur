@@ -46,6 +46,4 @@ void UClairWorldUserWidget::NativeTick(const FGeometry& MyGeometry, float InDelt
 		// should not be visible.
 		ParentSizeBox->SetVisibility(ESlateVisibility::Hidden);
 	}
-
-
 }

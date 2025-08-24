@@ -37,19 +37,19 @@ float AClairCharacter::GetSpeed_Implementation() const
 }
 
 void AClairCharacter::TakeTurn_Implementation()
-{	
+{
+	// Send Event to add menu that select ability in HUD
+	OnTurnStarted.Broadcast();
 }
 
 // Ends turn when a gameplay ability has been finished
 void AClairCharacter::AbilityEndedHandler(UGameplayAbility* GameplayAbility)
 {
-	if (GameplayAbility->GetCurrentAbilitySpec()->InputID == static_cast<int32>(EAbilityInputID::Dodge)) 
-	{
-		return;
-	}
-	
 	if (UTurnManagerSubsystem* TurnManagerSubsystem = GetGameInstance()->GetSubsystem<UTurnManagerSubsystem>())
 	{
 		TurnManagerSubsystem->EndTurn();
 	}
+
+	
+	OnTurnEnded.Broadcast();
 }

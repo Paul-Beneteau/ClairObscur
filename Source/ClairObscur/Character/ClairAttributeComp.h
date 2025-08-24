@@ -10,7 +10,22 @@
 class UClairAbilitySystemComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnAttributeChanged, UClairAttributeComp*, ClairAttributeComp, AActor*, Instigator, float, OldValue, float, NewValue);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBurnStatusChanged, int32, BurnStacks);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAttributeDelegate);
+
+USTRUCT(BlueprintType)
+struct FBurningStack
+{
+	GENERATED_BODY()
+	
+	// Gameplay effect that set burning stack damage
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TSubclassOf<UGameplayEffect> Effect;
+
+	// Number of turn the stack deals damage
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	int32 TurnDuration { 3 };
+};
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class CLAIROBSCUR_API UClairAttributeComp : public UActorComponent
@@ -22,8 +37,13 @@ public:
 	FOnAttributeChanged OnHealthChanged;
 	UPROPERTY(BlueprintAssignable)
 	FOnAttributeChanged OnActionPointsChanged;
+	
 	UPROPERTY(BlueprintAssignable)
 	FAttributeDelegate OnDeath;
+
+	// Send event when character starts and stop to burn
+	UPROPERTY(BlueprintAssignable)
+	FOnBurnStatusChanged OnBurnStatusChanged;
 	
 	// Initialize the component using an ability system component.
 	void Initialize(UClairAbilitySystemComponent* ClairAbilitySystemComp);
@@ -32,20 +52,31 @@ public:
 	int32 GetMaxHealth() const { return (ClairAttributeSet ? ClairAttributeSet->GetMaxHealth() : 0.0f); }
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	int32 GetHealth() const { return (ClairAttributeSet ? ClairAttributeSet->GetHealth() : 0.0f); };
-
-	// Callback when health is changed
-	virtual void HandleHealthChanged(AActor* Instigator, float OldValue, float NewValue);
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	int32 GetMaxActionPoints() const { return (ClairAttributeSet ? ClairAttributeSet->GetMaxActionPoints() : 0.0f); }
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	int32 GetActionPoints() const { return (ClairAttributeSet ? ClairAttributeSet->GetActionPoints() : 0.0f); }
-
-	// Callback when action points count is changed
-	virtual void HandleActionPointsChanged(AActor* Instigator, float OldValue, float NewValue);
 	
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	int32 GetSpeed() const { return (ClairAttributeSet ? ClairAttributeSet->GetSpeed() : 0.0f); }
+	
+	// Callback when health is changed
+	virtual void HandleHealthChanged(AActor* Instigator, float OldValue, float NewValue);
+	// Callback when action points count is changed
+	virtual void HandleActionPointsChanged(AActor* Instigator, float OldValue, float NewValue);
+
+	UFUNCTION()
+	void HandleBurnStatus();
+
+	UFUNCTION(BlueprintCallable, Category = "Status")
+	int32 GetBurningStacksCount() const { return BurningStacks.Num(); };
+	
+	UFUNCTION(BlueprintCallable, Category = "Status")	
+	void AddBurningStacks(const TArray<FBurningStack> InBurningStacks);
+	
+	UFUNCTION(BlueprintCallable, Category = "Status")	
+	float GetBurningDamage();
 	
 protected:
 	UPROPERTY()
@@ -63,4 +94,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	float OnDeathDestroyActorDelay { 2.0f };
+	
+	// Number of turns the burning effect is applied
+	TArray<FBurningStack> BurningStacks;	
 };

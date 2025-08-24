@@ -17,6 +17,7 @@ enum class EAbilityInputID : uint8
 	None = 0 UMETA(Hidden),
 	PrimaryAttack = 1,
 	Dodge = 2,
+	PrimaryFireAbility = 3,
 };
 
 // Bind an input action with a gameplay ability input ID

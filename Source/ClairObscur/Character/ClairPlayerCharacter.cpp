@@ -57,31 +57,28 @@ void AClairPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	{
 		if (Ability.InputID == EAbilityInputID::Dodge)
 		{
-			InputComp->BindAction(Ability.InputAction, ETriggerEvent::Started, this,
-				&AClairPlayerCharacter::Dodge, Ability.InputID);
+			InputComp->BindAction(Ability.InputAction, ETriggerEvent::Started, this, &AClairPlayerCharacter::Dodge);
+			continue;
 		}
-		else
-		{
-			InputComp->BindAction(Ability.InputAction, ETriggerEvent::Started, this,
+
+		// Rest of abilities must be selected first before it can be activated
+		InputComp->BindAction(Ability.InputAction, ETriggerEvent::Started, this,
 				&AClairPlayerCharacter::SelectAbilityHandler, Ability.InputID);
-		}
 	}
 }
 
 // Loads input context to select an ability and wait for the player input 
 void AClairPlayerCharacter::TakeTurn_Implementation()
 {
+	Super::TakeTurn_Implementation();
 	InputSubsystem->RemoveMappingContext(Inputs->DefenseAbilityContext);
 	InputSubsystem->AddMappingContext(Inputs->SelectAbilityContext, 0);
-
-	// Send Event to add menu that select ability in HUD
-	OnTurnStarted.Broadcast();
 }
 
-void AClairPlayerCharacter::Dodge(EAbilityInputID InputID)
+void AClairPlayerCharacter::Dodge()
 {
 	CameraComp->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
-	ClairAbilitySystemComp->ActivateAbilityOnTarget(InputID, this);
+	ClairAbilitySystemComp->ActivateAbilityOnTarget(EAbilityInputID::Dodge, this);
 }
 
 // Saves the selected ability and switch input context and HUD to select target. Loads targets and move camera to the
@@ -153,7 +150,13 @@ void AClairPlayerCharacter::ActivateAbilityHandler()
 }
 
 void AClairPlayerCharacter::AbilityEndedHandler(UGameplayAbility* GameplayAbility)
-{	
+{
+	// Don't end turn if this is a dodge
+	if (GameplayAbility->GetCurrentAbilitySpec()->InputID == static_cast<int32>(EAbilityInputID::Dodge))
+	{
+		return;
+	}
+	
 	InputSubsystem->AddMappingContext(Inputs->DefenseAbilityContext, 0);
 	
 	// Moves camera to his original position
@@ -162,8 +165,6 @@ void AClairPlayerCharacter::AbilityEndedHandler(UGameplayAbility* GameplayAbilit
 
 	// Reset target
 	CurrentTargetIndex = 0;
-
-	OnTurnEnded.Broadcast();
 	
 	Super::AbilityEndedHandler(GameplayAbility);
 }

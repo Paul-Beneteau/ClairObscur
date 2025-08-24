@@ -14,6 +14,8 @@ class UClairAttributeComp;
 class UClairAttributeSet;
 class UClairAbilitySystemComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCharacterDelegate);
+
 UCLASS()
 class CLAIROBSCUR_API AClairCharacter : public ACharacter, public IAbilitySystemInterface, public ITurnCharacterInterface
 {
@@ -26,6 +28,11 @@ public:
 	// Character Head Icon used by UI
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	UMaterial* Icon;
+
+	UPROPERTY(BlueprintAssignable)
+	FCharacterDelegate OnTurnStarted;
+	UPROPERTY(BlueprintAssignable)
+	FCharacterDelegate OnTurnEnded;
 	
 	AClairCharacter();
 
