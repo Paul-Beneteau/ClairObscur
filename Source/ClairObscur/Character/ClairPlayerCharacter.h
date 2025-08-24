@@ -69,6 +69,10 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;
 
+	// Gameplay effect applied at the beginning of each turn
+	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
+	TSubclassOf<UGameplayEffect> TakeTurnGameplayEffect;
+	
 	void Dodge();
 	
 	// Get targets and sort them by their Y axis. Switch input and HUD to select target.

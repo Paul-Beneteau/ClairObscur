@@ -35,6 +35,8 @@ public:
 	void Initialize(AActor* InOwnerActor, AActor* InAvatarActor);
 
 	void ActivateAbilityOnTarget(const EAbilityInputID InputID, AActor* Target);
+
+	bool CanActivateAbility(const EAbilityInputID InputID);
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Abilities")

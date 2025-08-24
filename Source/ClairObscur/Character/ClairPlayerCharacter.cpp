@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "ClairAbilitySystemComponent.h"
+#include "ClairAttributeComp.h"
 #include "ClairBotCharacter.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -71,8 +72,13 @@ void AClairPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 void AClairPlayerCharacter::TakeTurn_Implementation()
 {
 	Super::TakeTurn_Implementation();
+	
 	InputSubsystem->RemoveMappingContext(Inputs->DefenseAbilityContext);
 	InputSubsystem->AddMappingContext(Inputs->SelectAbilityContext, 0);
+
+	// Apply a gameplay effect at the start of the turn. Adds 1 action points each turn
+	ClairAbilitySystemComp->ApplyGameplayEffectToSelf(TakeTurnGameplayEffect->GetDefaultObject<UGameplayEffect>(),
+		0.0f, ClairAbilitySystemComp->MakeEffectContext());
 }
 
 void AClairPlayerCharacter::Dodge()
@@ -85,6 +91,13 @@ void AClairPlayerCharacter::Dodge()
 // first target
 void AClairPlayerCharacter::SelectAbilityHandler(EAbilityInputID InputID)
 {
+	// Check that the ability can be activated before selecting it. e.g. if the character doesn't have enough action
+	// points to use the ability
+	if (ClairAbilitySystemComp->CanActivateAbility(InputID) == false)
+	{
+		return;
+	}
+	
 	SelectedAbility = InputID;
 		
 	// Switch Input context to select a target
