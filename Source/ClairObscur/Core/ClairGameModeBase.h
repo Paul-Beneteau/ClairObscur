@@ -6,7 +6,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "ClairGameModeBase.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGameModeDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCombatStatusChanged);
 
 UCLASS()
 class CLAIROBSCUR_API AClairGameModeBase : public AGameModeBase
@@ -15,13 +15,11 @@ class CLAIROBSCUR_API AClairGameModeBase : public AGameModeBase
 
 public:		
 	UPROPERTY(BlueprintAssignable)
-	FGameModeDelegate OnCombatWin;
-
+	FOnCombatStatusChanged OnCombatWin;
 	UPROPERTY(BlueprintAssignable)
-	FGameModeDelegate OnCombatLost;
-
+	FOnCombatStatusChanged OnCombatLost;
 	UPROPERTY(BlueprintAssignable)
-	FGameModeDelegate OnCombatRestart;
+	FOnCombatStatusChanged OnCombatRestart;
 
 	virtual void StartPlay() override;
 

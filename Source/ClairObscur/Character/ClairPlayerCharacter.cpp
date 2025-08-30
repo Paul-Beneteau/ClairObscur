@@ -4,23 +4,13 @@
 #include "EnhancedInputSubsystems.h"
 #include "../ClairGameStatics.h"
 #include "Camera/CameraComponent.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "ClairAbilitySystemComponent.h"
-#include "ClairAttributeComp.h"
 #include "ClairBotCharacter.h"
 #include "Kismet/GameplayStatics.h"
 
 AClairPlayerCharacter::AClairPlayerCharacter()
 {	
-	SpringArmComp = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComp"));
-	SpringArmComp->SetupAttachment(RootComponent);
-	// Player rotates the player controller when moving the mouse to look around which rotates the spring arm camera.
-	SpringArmComp->bUsePawnControlRotation = true;
-	// Disable side effect that rotate spring arm when capsule component is rotated (eg: with bOrientRotationToMovement)
-	SpringArmComp->SetUsingAbsoluteRotation(true);
-	
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
-	CameraComp->SetupAttachment(SpringArmComp);
 }
 
 // Loads player input subsystem and mapping context then binds input actions to their corresponding functions.
@@ -34,62 +24,94 @@ void AClairPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 		return;
 	}
 	
-	// Loads input subsystem
 	const APlayerController* PlayerController { GetController<APlayerController>() };
 	check(PlayerController);	
 	const ULocalPlayer* LocalPlayer { PlayerController->GetLocalPlayer() };
 	check(LocalPlayer);	
-	InputSubsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+	UEnhancedInputLocalPlayerSubsystem* InputSubsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
 	check(InputSubsystem);
 	
 	InputSubsystem->ClearAllMappings();
+	// Gives the player the ability to dodge at the start of the combat before his turn
 	InputSubsystem->AddMappingContext(Inputs->DefenseAbilityContext, 0);
 
 	UEnhancedInputComponent* InputComp { CastChecked<UEnhancedInputComponent>(PlayerInputComponent) };
 	
 	// Binds input actions
-	InputComp->BindAction(Inputs->Move, ETriggerEvent::Started, this, &AClairPlayerCharacter::Move);
-	InputComp->BindAction(Inputs->Look, ETriggerEvent::Started, this, &AClairPlayerCharacter::Look);
-	InputComp->BindAction(Inputs->SelectNextTarget, ETriggerEvent::Started, this, &AClairPlayerCharacter::SelectNextTargetHandler);
-	InputComp->BindAction(Inputs->SelectPreviousTarget, ETriggerEvent::Started, this, &AClairPlayerCharacter::SelectPreviousTargetHandler);
-	InputComp->BindAction(Inputs->ActivateAbility, ETriggerEvent::Started, this, &AClairPlayerCharacter::ActivateAbilityHandler);
+	InputComp->BindAction(Inputs->SelectAbility, ETriggerEvent::Started, this, &AClairPlayerCharacter::SetSelectAbilityContext);
+	InputComp->BindAction(Inputs->SelectNextTarget, ETriggerEvent::Started, this, &AClairPlayerCharacter::SelectNextTarget);
+	InputComp->BindAction(Inputs->SelectPreviousTarget, ETriggerEvent::Started, this, &AClairPlayerCharacter::SelectPreviousTarget);
+	InputComp->BindAction(Inputs->ActivateAbility, ETriggerEvent::Started, this, &AClairPlayerCharacter::ActivateAbility);
+	InputComp->BindAction(Inputs->Cancel, ETriggerEvent::Started, this, &AClairPlayerCharacter::SetSelectActionContext);
 	
 	for (FClairAbilityInput Ability : Inputs->Abilities)
 	{
+		// Dodge doesn't need a target like rest of abilities and doesn't end turn
 		if (Ability.InputID == EAbilityInputID::Dodge)
 		{
-			InputComp->BindAction(Ability.InputAction, ETriggerEvent::Started, this, &AClairPlayerCharacter::Dodge);
+			InputComp->BindAction(Ability.InputAction, ETriggerEvent::Started, ClairAbilitySystemComp,
+				                  &UClairAbilitySystemComponent::ActivateAbility, Ability.InputID);
 			continue;
 		}
 
-		// Rest of abilities must be selected first before it can be activated
 		InputComp->BindAction(Ability.InputAction, ETriggerEvent::Started, this,
-				&AClairPlayerCharacter::SelectAbilityHandler, Ability.InputID);
+				&AClairPlayerCharacter::SetSelectTargetContext, Ability.InputID);
 	}
 }
 
-// Loads input context to select an ability and wait for the player input 
+// Load select action context that wait for the player to choose an action. Apply the beginning turn gameplay effect
 void AClairPlayerCharacter::TakeTurn_Implementation()
 {
 	Super::TakeTurn_Implementation();
 	
-	InputSubsystem->RemoveMappingContext(Inputs->DefenseAbilityContext);
-	InputSubsystem->AddMappingContext(Inputs->SelectAbilityContext, 0);
+	SetSelectActionContext();
 
 	// Apply a gameplay effect at the start of the turn. Adds 1 action points each turn
-	ClairAbilitySystemComp->ApplyGameplayEffectToSelf(TakeTurnGameplayEffect->GetDefaultObject<UGameplayEffect>(),
+	ClairAbilitySystemComp->ApplyGameplayEffectToSelf(BeginTurnGameplayEffect->GetDefaultObject<UGameplayEffect>(),
 		0.0f, ClairAbilitySystemComp->MakeEffectContext());
 }
 
-void AClairPlayerCharacter::Dodge()
+// Removes current input mapping context and set a new one if parameter is provided. Moves camera to the new location
+// and send corresponding context changed event
+void AClairPlayerCharacter::SetContext(const EPlayerContext PlayerContext, const FTransform& CameraTransform, 
+									   const UInputMappingContext* InputContext /* = nullptr */)
 {
-	CameraComp->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
-	ClairAbilitySystemComp->ActivateAbilityOnTarget(EAbilityInputID::Dodge, this);
+	const APlayerController* PlayerController { GetController<APlayerController>() };
+	check(PlayerController);	
+	const ULocalPlayer* LocalPlayer { PlayerController->GetLocalPlayer() };
+	check(LocalPlayer);	
+	UEnhancedInputLocalPlayerSubsystem* InputSubsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
+	check(InputSubsystem);
+	
+	InputSubsystem->ClearAllMappings();
+	
+	if (InputContext)
+	{
+		InputSubsystem->AddMappingContext(InputContext, 0);
+	}
+
+	CameraComp->SetWorldTransform(CameraTransform);
+	
+	OnContextChanged.Broadcast(PlayerContext);
+}
+
+void AClairPlayerCharacter::SetSelectActionContext()
+{
+	SetContext(EPlayerContext::SelectAction,
+		       FTransform(PlayerCameraRotation, GetActorLocation() + PlayerCameraLocationOffSet),
+		    Inputs->SelectActionContext);
+}
+
+void AClairPlayerCharacter::SetSelectAbilityContext()
+{
+	SetContext(EPlayerContext::SelectAbility,
+		       FTransform(PlayerCameraRotation, GetActorLocation() + PlayerCameraLocationOffSet),
+		    Inputs->SelectAbilityContext);
 }
 
 // Saves the selected ability and switch input context and HUD to select target. Loads targets and move camera to the
 // first target
-void AClairPlayerCharacter::SelectAbilityHandler(EAbilityInputID InputID)
+void AClairPlayerCharacter::SetSelectTargetContext(EAbilityInputID InputID)
 {
 	// Check that the ability can be activated before selecting it. e.g. if the character doesn't have enough action
 	// points to use the ability
@@ -97,111 +119,78 @@ void AClairPlayerCharacter::SelectAbilityHandler(EAbilityInputID InputID)
 	{
 		return;
 	}
-	
+
+	// Saves selected ability that will be activated if the player select a target
 	SelectedAbility = InputID;
+
+	GetTargets();
+	check(Targets.IsValidIndex(CurrentTargetIndex));
 		
-	// Switch Input context to select a target
-	InputSubsystem->RemoveMappingContext(Inputs->SelectAbilityContext);
-	InputSubsystem->AddMappingContext(Inputs->SelectTargetContext, 0);
-
-	// Send Event to remove menu that select ability in HUD
-	OnAbilitySelected.Broadcast();
-	
-	// Get Targets
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AClairBotCharacter::StaticClass(),Targets);
-	check(Targets.IsValidIndex(0));
-	// Sort targets with their Y axis location
-	Targets.Sort([](const AActor& FirstActor, const AActor& SecondActor)
-				 { return FirstActor.GetActorLocation().Y < SecondActor.GetActorLocation().Y; });
-
-	// Moves camera to the first target
-	MoveCameraToActor(*Targets[CurrentTargetIndex], SelectedTargetCameraOffset);
+	SetContext(EPlayerContext::SelectTarget,
+		       FTransform(TargetCameraRotation, FVector (Targets[CurrentTargetIndex]->GetActorLocation() + TargetCameraLocationOffSet)),
+		    Inputs->SelectTargetContext);
 }
 
-// Switch to next target et moves camera
-void AClairPlayerCharacter::SelectNextTargetHandler()
+// Gets every bot in the world and sorts them with their Y axis location
+void AClairPlayerCharacter::GetTargets()
 {
+	// Reset target index
+	CurrentTargetIndex = 0;
+		
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AClairBotCharacter::StaticClass(),Targets);
+		
+	Targets.Sort([](const AActor& FirstActor, const AActor& SecondActor)
+				 { return FirstActor.GetActorLocation().Y < SecondActor.GetActorLocation().Y; });
+}
+
+// Moves camera to next target and update target index
+void AClairPlayerCharacter::SelectNextTarget()
+{
+	// Do nothing if the last target is already selected
 	if (CurrentTargetIndex < Targets.Num() - 1)
 	{
 		CurrentTargetIndex++;
-		MoveCameraToActor(*Targets[CurrentTargetIndex], SelectedTargetCameraOffset);
+		CameraComp->SetWorldLocation(FVector (Targets[CurrentTargetIndex]->GetActorLocation() + TargetCameraLocationOffSet));
 	}
 }
 
-// Switch to previous target et moves camera
-void AClairPlayerCharacter::SelectPreviousTargetHandler()
-{	
+// Moves camera to previous target and update target index
+void AClairPlayerCharacter::SelectPreviousTarget()
+{
+	// Do nothing if the first target is already selected
 	if (CurrentTargetIndex > 0)
 	{
-		CurrentTargetIndex--;
-		MoveCameraToActor(*Targets[CurrentTargetIndex], SelectedTargetCameraOffset);
+		CurrentTargetIndex--;		
+		CameraComp->SetWorldLocation(FVector (Targets[CurrentTargetIndex]->GetActorLocation() + TargetCameraLocationOffSet));
 	}	
 }
 
-void AClairPlayerCharacter::MoveCameraToActor(const AActor& Actor, const FVector& CameraOffset)
+// Set corresponding context and activate selected ability on the current target
+void AClairPlayerCharacter::ActivateAbility()
 {	
-	FTransform CameraTransform;
-	CameraTransform.SetLocation(Actor.GetActorLocation() + CameraOffset);
-	CameraTransform.SetRotation(UE::Math::TQuat<double>(0.0, 0.0, 0.0, 0.0));
-	
-	CameraComp->SetWorldTransform(CameraTransform);
-}
-
-void AClairPlayerCharacter::ActivateAbilityHandler()
-{
-	InputSubsystem->RemoveMappingContext(Inputs->SelectTargetContext);
-
-	// Send Event to remove menu that select target in HUD
-	OnTargetSelected.Broadcast();
-	
-	// Moves camera to have a large view of the activated ability
-	CameraComp->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));	
-	CameraComp->SetWorldLocation(GetActorLocation() + ActivatedAbilityCameraOffset);
-	CameraComp->SetWorldRotation(FRotator(-20.0, -20.0, 0.0).Quaternion());
+	SetContext(EPlayerContext::AbilityActivated,
+		       FTransform(AbilityCameraRotation,GetActorLocation() + AbilityCameraLocationOffSet));
 	
 	ClairAbilitySystemComp->ActivateAbilityOnTarget(SelectedAbility, Targets[CurrentTargetIndex]);
 }
 
-void AClairPlayerCharacter::AbilityEndedHandler(UGameplayAbility* GameplayAbility)
+// End the turn of the character if the ability isn't a dodge
+void AClairPlayerCharacter::OnAbilityEndedHandler(UGameplayAbility* GameplayAbility)
 {
-	// Don't end turn if this is a dodge
 	if (GameplayAbility->GetCurrentAbilitySpec()->InputID == static_cast<int32>(EAbilityInputID::Dodge))
 	{
 		return;
 	}
 	
-	InputSubsystem->AddMappingContext(Inputs->DefenseAbilityContext, 0);
-	
-	// Moves camera to his original position
-	CameraComp->AttachToComponent(SpringArmComp, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, false));
-	CameraComp->SetRelativeRotation(FRotator(-20.0, 0.0, 0.0).Quaternion());
-
-	// Reset target
-	CurrentTargetIndex = 0;
-	
-	Super::AbilityEndedHandler(GameplayAbility);
+	EndTurn();
 }
 
-// Gets the forward and right axis player input movement and moves in the corresponding direction.
-// (e.g. by default keyboard key W and S forms the forward axis. A and D forms the right axis)
-void AClairPlayerCharacter::Move(const FInputActionInstance& MoveAxis2D)
-{
-	FRotator Direction { FRotator::ZeroRotator };
-	Direction.Yaw = GetControlRotation().Yaw;
+void AClairPlayerCharacter::EndTurn()
+{	
+	SetContext(EPlayerContext::WaitNextTurn,
+		       FTransform(PlayerCameraRotation, GetActorLocation() + PlayerCameraLocationOffSet),
+		    Inputs->DefenseAbilityContext);
 	
-	const double ForwardAxis { MoveAxis2D.GetValue().Get<FVector2D>().Y };	
-	AddMovementInput(Direction.Vector(), ForwardAxis);
-	
-	const double RightAxis { MoveAxis2D.GetValue().Get<FVector2D>().X };	
-	AddMovementInput(Direction.RotateVector(FVector::RightVector), RightAxis);	
+	Super::EndTurn();
 }
-
-// Rotates yaw player controller according the up and down mouse axis input and rotates pitch according to the left and
-// right mouse axis input.
-void AClairPlayerCharacter::Look(const FInputActionValue& MouseAxis2D)
-{
-	AddControllerYawInput(MouseAxis2D.Get<FVector2D>().X);
-	AddControllerPitchInput(-MouseAxis2D.Get<FVector2D>().Y);
-}
-
 

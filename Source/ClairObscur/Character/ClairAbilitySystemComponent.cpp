@@ -4,6 +4,7 @@
 #include "ClairAbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "ClairAttributeSet.h"
+#include "ClairPlayerCharacter.h"
 #include "ClairObscur/ClairGameStatics.h"
 
 // Grants abilities from ClairAbilitySet and saves their handle
@@ -28,8 +29,16 @@ void UClairAbilitySystemComponent::Initialize(AActor* InOwnerActor, AActor* InAv
 	}
 }
 
+void UClairAbilitySystemComponent::ActivateAbility(const EAbilityInputID InputID)
+{
+	FGameplayAbilitySpec* AbilitySpec = FindAbilitySpecFromHandle(*AbilityHandles.Find(InputID));
+	check(AbilitySpec);
+	
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwnerActor(), AbilitySpec->GameplayEventData->EventTag , *AbilitySpec->GameplayEventData);
+}
+
 // Send en event with an event tag associated from an InputID in AbilityHandles. This event activates the associated
-// ability with the target as a parameter.
+// ability with the target as a parameter. EventMagnitude represent a damage multiplier of the ability
 void UClairAbilitySystemComponent::ActivateAbilityOnTarget(const EAbilityInputID InputID, AActor* Target)
 {	
 	FGameplayAbilitySpec* AbilitySpec = FindAbilitySpecFromHandle(*AbilityHandles.Find(InputID));
@@ -45,5 +54,5 @@ bool UClairAbilitySystemComponent::CanActivateAbility(const EAbilityInputID Inpu
 	FGameplayAbilitySpec* AbilitySpec = FindAbilitySpecFromHandle(*AbilityHandles.Find(InputID));
 	check(AbilitySpec && AbilitySpec->GameplayEventData);
 	
-	return  AbilitySpec->Ability->CanActivateAbility(*AbilityHandles.Find(InputID), AbilityActorInfo.Get());
+	return AbilitySpec->Ability->CanActivateAbility(*AbilityHandles.Find(InputID), AbilityActorInfo.Get());
 }

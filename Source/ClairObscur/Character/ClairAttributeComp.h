@@ -11,8 +11,9 @@ class UClairAbilitySystemComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnAttributeChanged, UClairAttributeComp*, ClairAttributeComp, AActor*, Instigator, float, OldValue, float, NewValue);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBurnStatusChanged, int32, BurnStacks);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAttributeDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStatusChanged);
 
+// Represent a burning stack that can be applied by abilities. It damages his owner each turn
 USTRUCT(BlueprintType)
 struct FBurningStack
 {
@@ -39,7 +40,7 @@ public:
 	FOnAttributeChanged OnActionPointsChanged;
 	
 	UPROPERTY(BlueprintAssignable)
-	FAttributeDelegate OnDeath;
+	FOnStatusChanged OnDeath;
 
 	// Send event when character starts and stop to burn
 	UPROPERTY(BlueprintAssignable)
@@ -61,14 +62,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
 	int32 GetSpeed() const { return (ClairAttributeSet ? ClairAttributeSet->GetSpeed() : 0.0f); }
 	
-	// Callback when health is changed
-	virtual void HandleHealthChanged(AActor* Instigator, float OldValue, float NewValue);
-	// Callback when action points count is changed
-	virtual void HandleActionPointsChanged(AActor* Instigator, float OldValue, float NewValue);
-
-	UFUNCTION()
-	void HandleBurnStatus();
-
 	UFUNCTION(BlueprintCallable, Category = "Status")
 	int32 GetBurningStacksCount() const { return BurningStacks.Num(); };
 	
@@ -80,8 +73,7 @@ public:
 	
 protected:
 	UPROPERTY()
-	TObjectPtr<UClairAbilitySystemComponent> ClairAbilitySystemComp;
-	
+	TObjectPtr<UClairAbilitySystemComponent> ClairAbilitySystemComp;	
 	UPROPERTY()
 	TObjectPtr<const UClairAttributeSet> ClairAttributeSet;
 	
@@ -96,5 +88,13 @@ protected:
 	float OnDeathDestroyActorDelay { 2.0f };
 	
 	// Number of turns the burning effect is applied
-	TArray<FBurningStack> BurningStacks;	
+	TArray<FBurningStack> BurningStacks;
+
+	// Callback when health is changed
+	void HandleHealthChanged(AActor* Instigator, float OldValue, float NewValue);
+	// Callback when action points count is changed
+	void HandleActionPointsChanged(AActor* Instigator, float OldValue, float NewValue);
+
+	UFUNCTION()
+	void HandleBurnStatus();
 };

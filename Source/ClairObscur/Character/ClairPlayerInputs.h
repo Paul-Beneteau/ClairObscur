@@ -18,6 +18,7 @@ enum class EAbilityInputID : uint8
 	PrimaryAttack = 1,
 	Dodge = 2,
 	PrimaryFireAbility = 3,
+	PrimaryVirtuoseAbility = 4,
 };
 
 // Bind an input action with a gameplay ability input ID
@@ -40,6 +41,8 @@ class CLAIROBSCUR_API UClairPlayerInputs : public UDataAsset
 
 public:
 	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputMappingContext> SelectActionContext;
+	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputMappingContext> SelectAbilityContext;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputMappingContext> SelectTargetContext;
@@ -51,12 +54,16 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> Look;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputAction> SelectAbility;
+	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> SelectNextTarget;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> SelectPreviousTarget;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> ActivateAbility;
-
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputAction> Cancel;
+	
 	// Associates input action actions with an ability input ID
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TArray<FClairAbilityInput> Abilities;

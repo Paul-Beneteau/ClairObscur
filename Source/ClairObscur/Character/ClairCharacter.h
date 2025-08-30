@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayTagContainer.h"
-#include "ClairObscur/GameMode/TurnCharacterInterface.h"
+#include "ClairObscur/Core/TurnCharacterInterface.h"
 #include "GameFramework/Character.h"
 #include "ClairCharacter.generated.h"
 
@@ -14,7 +14,7 @@ class UClairAttributeComp;
 class UClairAttributeSet;
 class UClairAbilitySystemComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCharacterDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTurnChanged);
 
 UCLASS()
 class CLAIROBSCUR_API AClairCharacter : public ACharacter, public IAbilitySystemInterface, public ITurnCharacterInterface
@@ -24,15 +24,15 @@ class CLAIROBSCUR_API AClairCharacter : public ACharacter, public IAbilitySystem
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	FGameplayTagContainer GameplayTags;
-
+	
 	// Character Head Icon used by UI
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
 	UMaterial* Icon;
 
 	UPROPERTY(BlueprintAssignable)
-	FCharacterDelegate OnTurnStarted;
+	FOnTurnChanged OnTurnStarted;	
 	UPROPERTY(BlueprintAssignable)
-	FCharacterDelegate OnTurnEnded;
+	FOnTurnChanged OnTurnEnded;
 	
 	AClairCharacter();
 
@@ -40,21 +40,23 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	// Implements ITurnCharacterInterface
-	virtual float GetSpeed_Implementation() const override;
+	virtual float GetSpeed_Implementation() const override;	
 	virtual void TakeTurn_Implementation() override;
 	
 protected:
-	// GAS Components
+	// GAS Components. Pointer is used instead of TObjectPtr to bind callback with player input
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<UClairAbilitySystemComponent> ClairAbilitySystemComp;
+	UClairAbilitySystemComponent* ClairAbilitySystemComp;	
 	UPROPERTY()
-	TObjectPtr<UClairAttributeSet> ClairAttributeSet;
+	TObjectPtr<UClairAttributeSet> ClairAttributeSet;	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TObjectPtr<UClairAttributeComp> AttributeComp;
+	TObjectPtr<UClairAttributeComp> ClairAttributeComp;
 	
 	virtual void BeginPlay() override;
 
-	// Callback when a gameplay ability ends
-	virtual void AbilityEndedHandler(UGameplayAbility* GameplayAbility);
+	// Check if the turn must end. If so reset target and moves camera to his original position
+	virtual void OnAbilityEndedHandler(UGameplayAbility* GameplayAbility);
 
+	// End turn from turn manager subsystem
+	virtual void EndTurn();
 };

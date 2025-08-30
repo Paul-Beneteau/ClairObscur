@@ -4,17 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystemInterface.h"
 #include "ClairCharacter.h"
 #include "ClairPlayerCharacter.h"
-#include "ClairObscur/GameMode/TurnCharacterInterface.h"
-#include "GameFramework/Character.h"
 #include "ClairBotCharacter.generated.h"
-
-class UGameplayEffect;
-class UClairAttributeComp;
-class UClairAttributeSet;
-class UClairAbilitySystemComponent;
 
 UCLASS()
 class CLAIROBSCUR_API AClairBotCharacter : public AClairCharacter
@@ -25,6 +17,9 @@ public:
 	virtual void TakeTurn_Implementation() override;
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category="Abilities")
+	// Attack used to hit player
+	UPROPERTY(EditDefaultsOnly, Category="Attack")
 	EAbilityInputID PrimaryAttack { EAbilityInputID::PrimaryAttack };
+
+	virtual void OnAbilityEndedHandler(UGameplayAbility* GameplayAbility) override;
 };

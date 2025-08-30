@@ -6,22 +6,31 @@
 #include "ClairPlayerInputs.h"
 #include "ClairPlayerCharacter.generated.h"
 
-class UEnhancedInputLocalPlayerSubsystem;
 enum class EAbilityInputID : uint8;
-struct FGameplayAbilitySpecHandle;
-class UClairAbilitySet;
 class UGameplayEffect;
-class UClairAttributeSet;
-class UClairAbilitySystemComponent;
-class UClairAttributeComp;
-struct FInputActionValue;
-struct FInputActionInstance;
 class UCameraComponent;
-class USpringArmComponent;
-class UInputAction;
 class UInputMappingContext;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerDelegate);
+// Represents possible contexts that the player can be in from using inputs
+UENUM(BlueprintType)
+enum class EPlayerContext : uint8
+{
+	None = 0 UMETA(Hidden),
+	// Player must select an action (Select object/Select ability/Attack)
+	SelectAction = 1,
+	// Not implemented
+	SelectObject = 2,
+	// Player must select an ability
+	SelectAbility = 3,
+	// Player must select a target
+	SelectTarget = 4,
+	// Character is doing the selected ability
+	AbilityActivated = 5,
+	// Context between end of a turn and start of the next turn
+	WaitNextTurn = 6,
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnContextChanged, EPlayerContext, ContextEvent);
 
 UCLASS()
 class CLAIROBSCUR_API AClairPlayerCharacter : public AClairCharacter
@@ -29,25 +38,23 @@ class CLAIROBSCUR_API AClairPlayerCharacter : public AClairCharacter
 	GENERATED_BODY()
 
 public:
-	// Camera components
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	TObjectPtr<UCameraComponent> CameraComp;	
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	TObjectPtr<USpringArmComponent> SpringArmComp;
 
+	// Event when the player context changes
 	UPROPERTY(BlueprintAssignable)
-	FPlayerDelegate OnAbilitySelected;
-	UPROPERTY(BlueprintAssignable)
-	FPlayerDelegate OnTargetSelected;
+	FOnContextChanged OnContextChanged;
 	
 	AClairPlayerCharacter();
 	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
-	// Wait for the player to select an ability 
+	// Start player turn
 	virtual void TakeTurn_Implementation() override;
 
 protected:
+	
+	// Dataset containing player inputs
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UClairPlayerInputs> Inputs;
 
@@ -59,41 +66,48 @@ protected:
 	TArray<AActor*> Targets;	
 	int32 CurrentTargetIndex { 0 };
 
-	// Camera offset to view the scene when an ability is activated. Can be parametrised in BP
-	UPROPERTY(EditDefaultsOnly, Category="Camera")
-	FVector ActivatedAbilityCameraOffset { FVector(-300, 340, 170) };
-	// Camera offset to view the selected target. Can be parametrised in BP
-	UPROPERTY(EditDefaultsOnly, Category="Camera")
-	FVector SelectedTargetCameraOffset { FVector(-120, 0, 60) };
-	
-	UPROPERTY()
-	TObjectPtr<UEnhancedInputLocalPlayerSubsystem> InputSubsystem;
-
-	// Gameplay effect applied at the beginning of each turn
+	// Gameplay effect applied at the beginning of each turn. Gives 1 AP for now
 	UPROPERTY(EditDefaultsOnly, Category = "Attributes")
-	TSubclassOf<UGameplayEffect> TakeTurnGameplayEffect;
+	TSubclassOf<UGameplayEffect> BeginTurnGameplayEffect;
+
+	// Camera rotation and location used for every player context
+	FRotator PlayerCameraRotation { FRotator(-20.0, 0.0, 0.0).Quaternion() };
+	FVector PlayerCameraLocationOffSet {  FVector(-165, 90, 70) };
+
+	FRotator TargetCameraRotation { FRotator::ZeroRotator };
+	FVector TargetCameraLocationOffSet {  FVector(-120, 0, 60) };
+
+	FRotator AbilityCameraRotation { FRotator(-20.0, -20.0, 0.0).Quaternion() };
+	FVector AbilityCameraLocationOffSet {  FVector(-300, 340, 170) };
+
+	// Set a context depending on player input. It is composed of a camera transform that represents the scene view, an
+	// input mapping context that represent every inputs that can be used in this context and a player context that is
+	// sent via an event to change HUD accordingly
+	void SetContext(const EPlayerContext PlayerContext, const FTransform& CameraTransform, const UInputMappingContext* InputContext = nullptr);
+
+	// Set Context where player must select an action (Select object/Select ability/Attack)
+	void SetSelectActionContext();
+
+	// Set Context where player must select an ability
+	void SetSelectAbilityContext();
 	
-	void Dodge();
+	// Set Context where player must select a target
+	void SetSelectTargetContext(EAbilityInputID InputID);
 	
-	// Get targets and sort them by their Y axis. Switch input and HUD to select target.
-	void SelectAbilityHandler(EAbilityInputID InputID);
+	// Get player targets and sort them by their Y axis.
+	void GetTargets();
 	
 	// Sets next target and moves camera to target location
-	void SelectNextTargetHandler();
+	void SelectNextTarget();
 	
 	// Sets previous target and moves camera to target location
-	void SelectPreviousTargetHandler();
+	void SelectPreviousTarget();
 	
-	void MoveCameraToActor(const AActor& Actor, const FVector& CameraOffset);
-
 	// Moves camera to have a large view and activate ability
-	void ActivateAbilityHandler();
+	void ActivateAbility();
 
-	// Reset target and moves camera to his original position
-	virtual void AbilityEndedHandler(UGameplayAbility* GameplayAbility) override;
-
-	// Moves player character according to (WASD by default) keyboard keys.
-	void Move(const FInputActionInstance& MoveAxis2D);
-	// Rotate the player controller according to the mouse inputs.
-	void Look(const FInputActionValue& MouseAxis2D);
+	// Check if the turn must end. If so reset target and moves camera to his original position
+	virtual void OnAbilityEndedHandler(UGameplayAbility* GameplayAbility) override;
+	
+	virtual void EndTurn() override;
 };

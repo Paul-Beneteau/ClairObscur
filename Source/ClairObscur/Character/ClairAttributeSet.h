@@ -44,7 +44,8 @@ protected:
 	float HealthBeforeChange { 0.0f };
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
-	FGameplayAttributeData Damage;	
+	FGameplayAttributeData Damage;
+	
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
 	FGameplayAttributeData Heal;
 	

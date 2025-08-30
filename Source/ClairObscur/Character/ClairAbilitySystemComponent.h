@@ -34,6 +34,9 @@ class CLAIROBSCUR_API UClairAbilitySystemComponent : public UAbilitySystemCompon
 public:
 	void Initialize(AActor* InOwnerActor, AActor* InAvatarActor);
 
+	UFUNCTION()
+	void ActivateAbility(const EAbilityInputID InputID);
+	
 	void ActivateAbilityOnTarget(const EAbilityInputID InputID, AActor* Target);
 
 	bool CanActivateAbility(const EAbilityInputID InputID);

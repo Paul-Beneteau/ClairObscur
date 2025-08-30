@@ -2,7 +2,7 @@
 
 #include "ClairPlayerCharacter.h"
 #include "ClairObscur/ClairGameStatics.h"
-#include "ClairObscur/GameMode/TurnManagerSubsystem.h"
+#include "ClairObscur/Core/TurnManagerSubsystem.h"
 #include "GameFramework/Character.h"
 
 void UClairAttributeComp::Initialize(UClairAbilitySystemComponent* InAbilitySystemComp)
@@ -44,8 +44,6 @@ void UClairAttributeComp::Initialize(UClairAbilitySystemComponent* InAbilitySyst
 
 void UClairAttributeComp::HandleHealthChanged(AActor* Instigator, float OldValue, float NewValue)
 {
-	OnHealthChanged.Broadcast(this, Instigator, OldValue, NewValue);
-
 	// If the character died
 	if (NewValue == 0.0f && NewValue != OldValue)
 	{
@@ -80,6 +78,8 @@ void UClairAttributeComp::HandleHealthChanged(AActor* Instigator, float OldValue
 		
 		OnDeath.Broadcast();
 	}
+
+	OnHealthChanged.Broadcast(this, Instigator, OldValue, NewValue);
 }
 
 void UClairAttributeComp::HandleActionPointsChanged(AActor* Instigator, float OldValue, float NewValue)

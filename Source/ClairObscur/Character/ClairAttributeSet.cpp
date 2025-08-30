@@ -2,6 +2,8 @@
 
 
 #include "ClairAttributeSet.h"
+
+#include "ClairStanceCharacter.h"
 #include "GameplayEffectExtension.h"
 
 void UClairAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
@@ -30,7 +32,7 @@ void UClairAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute,
 	}
 }
 
-// Saves Attributes before attribute change are applied.
+// Saves Attributes before attribute change are applied. 
 bool UClairAttributeSet::PreGameplayEffectExecute(FGameplayEffectModCallbackData& Data)
 {
 	if (!Super::PreGameplayEffectExecute(Data))
@@ -40,7 +42,7 @@ bool UClairAttributeSet::PreGameplayEffectExecute(FGameplayEffectModCallbackData
 	
 	HealthBeforeChange = GetHealth();
 	ActionPointsBeforeChange = GetActionPoints();
-
+	
 	return true;
 }
 
@@ -54,6 +56,30 @@ void UClairAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 	
 	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
 	{
+		// Divide damage by 2 if the target has defensive stance
+		if (AClairStanceCharacter* StanceCharacter { Cast<AClairStanceCharacter>(GetOwningActor()) })
+		{
+			if (StanceCharacter && StanceCharacter->GameplayTags.HasTag(StanceCharacter->DefensiveStanceTag))
+			{
+				SetDamage(GetDamage() / 2);
+			}
+		}
+		
+		if (AClairStanceCharacter* StanceCharacter { Cast<AClairStanceCharacter>(Instigator) } )
+		{
+			// Multiply damage by 3 if the instigator has virtuose stance
+			if (StanceCharacter->GameplayTags.HasTag(StanceCharacter->VirtuoseStanceTag))
+			{
+				SetDamage(GetDamage() * 3);
+			}
+
+			// Multiply damage by 1.5 if the instigator has offensive stance
+			if (StanceCharacter->GameplayTags.HasTag(StanceCharacter->OffensiveStanceTag))
+			{
+				SetDamage(GetDamage() * 1.5);
+			}
+		}
+		
 		// Clamp new health between 0 and MaxHealth and set new health with damage attribute
 		SetHealth(FMath::Clamp(GetHealth() - GetDamage(), 0.0f, GetMaxHealth()));
 		SetDamage(0.0f);

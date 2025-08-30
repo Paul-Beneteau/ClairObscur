@@ -4,22 +4,21 @@
 #include "ClairBotCharacter.h"
 
 #include "ClairAbilitySystemComponent.h"
-#include "ClairObscur/ClairGameStatics.h"
-#include "ClairObscur/GameMode/TurnManagerSubsystem.h"
+#include "ClairStanceCharacter.h"
 
+// Activate primary attack on the player
 void AClairBotCharacter::TakeTurn_Implementation()
 {
-	// TODO: Target selection for multiple players
 	Super::TakeTurn_Implementation();
 	
 	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 	{
 		ClairAbilitySystemComp->ActivateAbilityOnTarget(PrimaryAttack, PlayerController->GetCharacter());
 	}
+}
 
-	// TODO remove comments used to debug
-	/*if (UTurnManagerSubsystem* TurnManagerSubsystem = GetGameInstance()->GetSubsystem<UTurnManagerSubsystem>())
-	{
-		TurnManagerSubsystem->EndTurn();
-	}*/
+// End turn when a gameplay ability ends
+void AClairBotCharacter::OnAbilityEndedHandler(UGameplayAbility* GameplayAbility)
+{
+	EndTurn();
 }

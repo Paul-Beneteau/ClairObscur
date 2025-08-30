@@ -6,24 +6,15 @@
 #include "ClairAbilitySystemComponent.h"
 #include "ClairAttributeComp.h"
 #include "ClairAttributeSet.h"
-#include "ClairObscur/GameMode/TurnManagerSubsystem.h"
+#include "ClairObscur/Core/TurnManagerSubsystem.h"
 
 AClairCharacter::AClairCharacter()
 {
+	// Increase update frequency for GAS components
 	SetNetUpdateFrequency(100.0f);
 	ClairAbilitySystemComp = CreateDefaultSubobject<UClairAbilitySystemComponent>(TEXT("ClairAbilitySystemComp"));
 	ClairAttributeSet = CreateDefaultSubobject<UClairAttributeSet>(TEXT("ClairAttributeSet"));
-	AttributeComp = CreateDefaultSubobject<UClairAttributeComp>(TEXT("AttributeComp"));
-}
-
-// Initializes clair ability system component with his attribute set and grant initial ability set.
-void AClairCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-
-	ClairAbilitySystemComp->Initialize(this, this);
-	AttributeComp->Initialize(ClairAbilitySystemComp);
-	ClairAbilitySystemComp->AbilityEndedCallbacks.AddUObject(this, &ThisClass::AbilityEndedHandler);
+	ClairAttributeComp = CreateDefaultSubobject<UClairAttributeComp>(TEXT("AttributeComp"));
 }
 
 UAbilitySystemComponent* AClairCharacter::GetAbilitySystemComponent() const
@@ -33,23 +24,35 @@ UAbilitySystemComponent* AClairCharacter::GetAbilitySystemComponent() const
 
 float AClairCharacter::GetSpeed_Implementation() const
 {
-	return AttributeComp->GetSpeed();
+	return ClairAttributeComp->GetSpeed();
 }
 
+// Send start turn event used by child class and UI
 void AClairCharacter::TakeTurn_Implementation()
 {
-	// Send Event to add menu that select ability in HUD
 	OnTurnStarted.Broadcast();
 }
 
-// Ends turn when a gameplay ability has been finished
-void AClairCharacter::AbilityEndedHandler(UGameplayAbility* GameplayAbility)
+// Initializes clair ability system component with his attribute set and grant initial ability set.
+void AClairCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	ClairAbilitySystemComp->Initialize(this, this);
+	ClairAttributeComp->Initialize(ClairAbilitySystemComp);
+	ClairAbilitySystemComp->AbilityEndedCallbacks.AddUObject(this, &ThisClass::OnAbilityEndedHandler);
+}
+
+// Callback used by child class when an ability end
+void AClairCharacter::OnAbilityEndedHandler(UGameplayAbility* GameplayAbility)
+{ }
+
+void AClairCharacter::EndTurn()
 {
 	if (UTurnManagerSubsystem* TurnManagerSubsystem = GetGameInstance()->GetSubsystem<UTurnManagerSubsystem>())
 	{
 		TurnManagerSubsystem->EndTurn();
 	}
-
 	
 	OnTurnEnded.Broadcast();
 }
