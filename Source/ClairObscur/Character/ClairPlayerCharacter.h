@@ -6,6 +6,8 @@
 #include "ClairPlayerInputs.h"
 #include "ClairPlayerCharacter.generated.h"
 
+enum class EClairConsumableKey : uint8;
+class UClairConsumableComponent;
 enum class EAbilityInputID : uint8;
 class UGameplayEffect;
 class UCameraComponent;
@@ -18,11 +20,9 @@ enum class EPlayerContext : uint8
 	None = 0 UMETA(Hidden),
 	// Player must select an action (Select object/Select ability/Attack)
 	SelectAction = 1,
-	// Not implemented
-	SelectObject = 2,
-	// Player must select an ability
+	SelectConsumable = 2,
 	SelectAbility = 3,
-	// Player must select a target
+	// Player must choose a target for the selected ability
 	SelectTarget = 4,
 	// Character is doing the selected ability
 	AbilityActivated = 5,
@@ -41,6 +41,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	TObjectPtr<UCameraComponent> CameraComp;	
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Consumable")
+	TObjectPtr<UClairConsumableComponent> ClairConsumableComp;
+	
 	// Event when the player context changes
 	UPROPERTY(BlueprintAssignable)
 	FOnContextChanged OnContextChanged;
@@ -88,11 +91,17 @@ protected:
 	// Set Context where player must select an action (Select object/Select ability/Attack)
 	void SetSelectActionContext();
 
+	// Set Context where player must select an item
+	void SetSelectItemContext();
+	
 	// Set Context where player must select an ability
 	void SetSelectAbilityContext();
 	
 	// Set Context where player must select a target
 	void SetSelectTargetContext(EAbilityInputID InputID);
+
+	// Try to activate consumable and end turn if it is activated
+	void TryActivateConsumable(EClairConsumableKey Key);
 	
 	// Get player targets and sort them by their Y axis.
 	void GetTargets();

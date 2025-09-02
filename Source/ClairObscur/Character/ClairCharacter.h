@@ -24,6 +24,10 @@ class CLAIROBSCUR_API AClairCharacter : public ACharacter, public IAbilitySystem
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	FGameplayTagContainer GameplayTags;
+
+	// Tag used to check player defenseless status. This should be moved in a dataset when character has multiple status
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag DefencelessTag { FGameplayTag::EmptyTag };
 	
 	// Character Head Icon used by UI
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
@@ -51,6 +55,8 @@ protected:
 	TObjectPtr<UClairAttributeSet> ClairAttributeSet;	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UClairAttributeComp> ClairAttributeComp;
+
+	FGameplayTagContainer PreviousTurnGameplayTags;
 	
 	virtual void BeginPlay() override;
 

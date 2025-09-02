@@ -76,7 +76,8 @@ void UClairAttributeComp::HandleHealthChanged(AActor* Instigator, float OldValue
 			TurnManagerSubsystem->RemoveCharacter(GetOwner());
 		}
 		
-		OnDeath.Broadcast();
+		//OnDeath.Broadcast();
+		OnDeathStatusChanged.Broadcast();
 	}
 
 	OnHealthChanged.Broadcast(this, Instigator, OldValue, NewValue);
@@ -126,7 +127,8 @@ void UClairAttributeComp::HandleBurnStatus()
 			// If one or more burning stack has been removed 
 			if (BurningStacksCount > BurningStacks.Num())
 			{
-				OnBurnStatusChanged.Broadcast(BurningStacks.Num());
+				//OnBurnStatusChanged.Broadcast(BurningStacks.Num());
+				OnBurnStatusChanged.Broadcast();
 			}
 		}
 	}	
@@ -139,7 +141,8 @@ void UClairAttributeComp::AddBurningStacks(const TArray<FBurningStack> InBurning
 	// Send event that the character is burning 
 	if (BurningStacks.Num() > 0)
 	{
-		OnBurnStatusChanged.Broadcast(BurningStacks.Num());
+		//OnBurnStatusChanged.Broadcast(BurningStacks.Num());
+		OnBurnStatusChanged.Broadcast();
 	}
 }
 

@@ -24,7 +24,8 @@ void AClairGameModeBase::StartPlay()
 	{
 		if (UClairAttributeComp* AttributeComp = Character->FindComponentByClass<UClairAttributeComp>())
 		{
-			AttributeComp->OnDeath.AddUniqueDynamic(this, &AClairGameModeBase::CheckCombatEnd);
+			//AttributeComp->OnDeath.AddUniqueDynamic(this, &AClairGameModeBase::CheckCombatEnd);
+			AttributeComp->OnDeathStatusChanged.AddUniqueDynamic(this, &AClairGameModeBase::CheckCombatEnd);
 		}
 	}
 

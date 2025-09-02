@@ -6,11 +6,13 @@
 #include "Camera/CameraComponent.h"
 #include "ClairAbilitySystemComponent.h"
 #include "ClairBotCharacter.h"
+#include "ClairConsumableComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 AClairPlayerCharacter::AClairPlayerCharacter()
 {	
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComp"));
+	ClairConsumableComp = CreateDefaultSubobject<UClairConsumableComponent>(TEXT("ConsumableComp"));
 }
 
 // Loads player input subsystem and mapping context then binds input actions to their corresponding functions.
@@ -33,11 +35,14 @@ void AClairPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	
 	InputSubsystem->ClearAllMappings();
 	// Gives the player the ability to dodge at the start of the combat before his turn
-	InputSubsystem->AddMappingContext(Inputs->DefenseAbilityContext, 0);
+	InputSubsystem->AddMappingContext(Inputs->WaitNextTurnContext, 0);
 
 	UEnhancedInputComponent* InputComp { CastChecked<UEnhancedInputComponent>(PlayerInputComponent) };
 	
 	// Binds input actions
+	InputComp->BindAction(Inputs->SelectConsumableMenu, ETriggerEvent::Started, this, &AClairPlayerCharacter::SetSelectItemContext);
+	InputComp->BindAction(Inputs->ActivateFirstConsumable, ETriggerEvent::Started, this, &AClairPlayerCharacter::TryActivateConsumable, EClairConsumableKey::FirstConsumable);
+	InputComp->BindAction(Inputs->ActivateSecondConsumable, ETriggerEvent::Started, this, &AClairPlayerCharacter::TryActivateConsumable, EClairConsumableKey::SecondConsumable);
 	InputComp->BindAction(Inputs->SelectAbility, ETriggerEvent::Started, this, &AClairPlayerCharacter::SetSelectAbilityContext);
 	InputComp->BindAction(Inputs->SelectNextTarget, ETriggerEvent::Started, this, &AClairPlayerCharacter::SelectNextTarget);
 	InputComp->BindAction(Inputs->SelectPreviousTarget, ETriggerEvent::Started, this, &AClairPlayerCharacter::SelectPreviousTarget);
@@ -76,12 +81,29 @@ void AClairPlayerCharacter::TakeTurn_Implementation()
 void AClairPlayerCharacter::SetContext(const EPlayerContext PlayerContext, const FTransform& CameraTransform, 
 									   const UInputMappingContext* InputContext /* = nullptr */)
 {
+	
 	const APlayerController* PlayerController { GetController<APlayerController>() };
-	check(PlayerController);	
+
+	if (!PlayerController)
+	{
+		UE_LOG(ClairLog, Warning, TEXT("AClairPlayerCharacter: Player controller is null"));
+		return;
+	}
+	
 	const ULocalPlayer* LocalPlayer { PlayerController->GetLocalPlayer() };
-	check(LocalPlayer);	
+
+	if (!LocalPlayer)
+	{
+		UE_LOG(ClairLog, Warning, TEXT("AClairPlayerCharacter: Local player is null"));
+		return;
+	}
+	
 	UEnhancedInputLocalPlayerSubsystem* InputSubsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>();
-	check(InputSubsystem);
+	if (!InputSubsystem)
+	{
+		UE_LOG(ClairLog, Warning, TEXT("AClairPlayerCharacter: InputSubsystem is null"));
+		return;
+	}
 	
 	InputSubsystem->ClearAllMappings();
 	
@@ -100,6 +122,13 @@ void AClairPlayerCharacter::SetSelectActionContext()
 	SetContext(EPlayerContext::SelectAction,
 		       FTransform(PlayerCameraRotation, GetActorLocation() + PlayerCameraLocationOffSet),
 		    Inputs->SelectActionContext);
+}
+
+void AClairPlayerCharacter::SetSelectItemContext()
+{
+	SetContext(EPlayerContext::SelectConsumable,
+			   FTransform(PlayerCameraRotation, GetActorLocation() + PlayerCameraLocationOffSet),
+			Inputs->SelectItemContext);
 }
 
 void AClairPlayerCharacter::SetSelectAbilityContext()
@@ -129,6 +158,16 @@ void AClairPlayerCharacter::SetSelectTargetContext(EAbilityInputID InputID)
 	SetContext(EPlayerContext::SelectTarget,
 		       FTransform(TargetCameraRotation, FVector (Targets[CurrentTargetIndex]->GetActorLocation() + TargetCameraLocationOffSet)),
 		    Inputs->SelectTargetContext);
+}
+
+// If there is a consumable, activate it and end turn
+void AClairPlayerCharacter::TryActivateConsumable(EClairConsumableKey Key)
+{
+	if (ClairConsumableComp->GetConsumableCount(Key))
+	{
+		ClairConsumableComp->ActivateConsumable(Key);
+		EndTurn();
+	}
 }
 
 // Gets every bot in the world and sorts them with their Y axis location
@@ -189,7 +228,7 @@ void AClairPlayerCharacter::EndTurn()
 {	
 	SetContext(EPlayerContext::WaitNextTurn,
 		       FTransform(PlayerCameraRotation, GetActorLocation() + PlayerCameraLocationOffSet),
-		    Inputs->DefenseAbilityContext);
+		    Inputs->WaitNextTurnContext);
 	
 	Super::EndTurn();
 }

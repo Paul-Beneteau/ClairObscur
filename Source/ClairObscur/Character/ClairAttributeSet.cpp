@@ -56,10 +56,19 @@ void UClairAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 	
 	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
 	{
+		// Multiply damage taken by 25% if the owner has defencess status
+		if (AClairCharacter* ClairCharacter { Cast<AClairCharacter>(GetOwningActor()) })
+		{
+			if (ClairCharacter->GameplayTags.HasTag(ClairCharacter->DefencelessTag))
+			{
+				SetDamage(GetDamage() * 1.25);
+			}
+		}
+		
 		// Divide damage by 2 if the target has defensive stance
 		if (AClairStanceCharacter* StanceCharacter { Cast<AClairStanceCharacter>(GetOwningActor()) })
 		{
-			if (StanceCharacter && StanceCharacter->GameplayTags.HasTag(StanceCharacter->DefensiveStanceTag))
+			if (StanceCharacter->GameplayTags.HasTag(StanceCharacter->DefensiveStanceTag))
 			{
 				SetDamage(GetDamage() / 2);
 			}
@@ -80,8 +89,9 @@ void UClairAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 			}
 		}
 		
-		// Clamp new health between 0 and MaxHealth and set new health with damage attribute
-		SetHealth(FMath::Clamp(GetHealth() - GetDamage(), 0.0f, GetMaxHealth()));
+		// Clamp new health between 0 and MaxHealth and set new health with damage attribute. Rounding to int to don't
+		// have float damage value
+		SetHealth(FMath::Clamp(FMath::RoundToInt(GetHealth() - GetDamage()), 0.0f, GetMaxHealth()));
 		SetDamage(0.0f);
 	}	
 	else if (Data.EvaluatedData.Attribute == GetHealAttribute())

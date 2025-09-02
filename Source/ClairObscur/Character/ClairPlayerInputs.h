@@ -19,6 +19,7 @@ enum class EAbilityInputID : uint8
 	Dodge = 2,
 	PrimaryFireAbility = 3,
 	PrimaryVirtuoseAbility = 4,
+	PrimaryOffensiveAbility = 5,
 };
 
 // Bind an input action with a gameplay ability input ID
@@ -43,16 +44,20 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputMappingContext> SelectActionContext;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputMappingContext> SelectItemContext;
+	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputMappingContext> SelectAbilityContext;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputMappingContext> SelectTargetContext;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
-	TObjectPtr<UInputMappingContext> DefenseAbilityContext;
+	TObjectPtr<UInputMappingContext> WaitNextTurnContext;
 	
 	UPROPERTY(EditDefaultsOnly, Category="Input")
-	TObjectPtr<UInputAction> Move;
+	TObjectPtr<UInputAction> SelectConsumableMenu;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
-	TObjectPtr<UInputAction> Look;
+	TObjectPtr<UInputAction> ActivateFirstConsumable;
+	UPROPERTY(EditDefaultsOnly, Category="Input")
+	TObjectPtr<UInputAction> ActivateSecondConsumable;
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputAction> SelectAbility;
 	UPROPERTY(EditDefaultsOnly, Category="Input")

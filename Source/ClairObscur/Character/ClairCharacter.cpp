@@ -6,6 +6,7 @@
 #include "ClairAbilitySystemComponent.h"
 #include "ClairAttributeComp.h"
 #include "ClairAttributeSet.h"
+#include "ClairObscur/ClairGameStatics.h"
 #include "ClairObscur/Core/TurnManagerSubsystem.h"
 
 AClairCharacter::AClairCharacter()
@@ -29,7 +30,7 @@ float AClairCharacter::GetSpeed_Implementation() const
 
 // Send start turn event used by child class and UI
 void AClairCharacter::TakeTurn_Implementation()
-{
+{	
 	OnTurnStarted.Broadcast();
 }
 
@@ -49,6 +50,26 @@ void AClairCharacter::OnAbilityEndedHandler(UGameplayAbility* GameplayAbility)
 
 void AClairCharacter::EndTurn()
 {
+	if (DefencelessTag == FGameplayTag::EmptyTag)
+	{
+		UE_LOG(ClairLog, Warning, TEXT("AClairCharacter: Defenceless tag has not been set"));
+	}
+	else
+	{		
+		for (FGameplayTag Tag : PreviousTurnGameplayTags)
+		{
+			// If Defenceless lasted for 1 turn, remove it
+			if (Tag == DefencelessTag)
+			{
+				GameplayTags.RemoveTag(DefencelessTag);
+				ClairAttributeComp->OnDefencelessStatusChanged.Broadcast();
+			}	
+		}
+	}
+	
+	PreviousTurnGameplayTags.Reset();
+	PreviousTurnGameplayTags.AppendTags(GameplayTags);
+	
 	if (UTurnManagerSubsystem* TurnManagerSubsystem = GetGameInstance()->GetSubsystem<UTurnManagerSubsystem>())
 	{
 		TurnManagerSubsystem->EndTurn();

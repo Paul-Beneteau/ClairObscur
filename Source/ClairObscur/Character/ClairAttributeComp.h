@@ -40,12 +40,12 @@ public:
 	FOnAttributeChanged OnActionPointsChanged;
 	
 	UPROPERTY(BlueprintAssignable)
-	FOnStatusChanged OnDeath;
-
-	// Send event when character starts and stop to burn
+	FOnStatusChanged OnDeathStatusChanged;
 	UPROPERTY(BlueprintAssignable)
-	FOnBurnStatusChanged OnBurnStatusChanged;
-	
+	FOnStatusChanged OnBurnStatusChanged;
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FOnStatusChanged OnDefencelessStatusChanged;
+		
 	// Initialize the component using an ability system component.
 	void Initialize(UClairAbilitySystemComponent* ClairAbilitySystemComp);
 	
