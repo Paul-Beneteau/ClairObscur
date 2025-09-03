@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -19,6 +17,8 @@ enum class EClairConsumableKey : uint8
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnConsumableChanged, EClairConsumableKey, Key, int32, Count);
 
+// Represents a consumable, it is composed of a gameplay effect applied to the owner and a count representing the
+// number os uses
 USTRUCT()
 struct FClairConsumableItem
 {
@@ -27,7 +27,6 @@ struct FClairConsumableItem
 	UPROPERTY(EditDefaultsOnly, Category = "Consumable")
 	TSubclassOf<UGameplayEffect> Effect;
 
-	// Consumable number of uses
 	UPROPERTY(EditDefaultsOnly, Category = "Consumable")
 	int32 Count { 0 };
 };
@@ -42,10 +41,10 @@ public:
 	FOnConsumableChanged OnConsumableChanged;
 
 	UFUNCTION(BlueprintCallable)
-	int32 GetConsumableCount(EClairConsumableKey Key) const;
+	int32 GetConsumableCount(const EClairConsumableKey Key) const;
 
 	UFUNCTION(BlueprintCallable)
-	void ActivateConsumable(EClairConsumableKey Key);
+	void ActivateConsumable(const EClairConsumableKey Key);
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Consumable")

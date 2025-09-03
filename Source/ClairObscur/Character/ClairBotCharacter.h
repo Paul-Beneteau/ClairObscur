@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -19,7 +17,7 @@ public:
 protected:
 	// Attack used to hit player
 	UPROPERTY(EditDefaultsOnly, Category="Attack")
-	EAbilityInputID PrimaryAttack { EAbilityInputID::PrimaryAttack };
+	EClairAbilityKey DefaultAttack { EClairAbilityKey::PrimaryAttack };
 
 	virtual void OnAbilityEndedHandler(UGameplayAbility* GameplayAbility) override;
 };

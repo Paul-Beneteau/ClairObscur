@@ -1,10 +1,7 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "TurnManagerSubsystem.h"
 
 #include "TurnCharacterInterface.h"
-#include "ClairObscur/ClairGameStatics.h"
+#include "ClairObscur/Core/ClairGameStatics.h"
 #include "Kismet/GameplayStatics.h"
 
 void UTurnManagerSubsystem::Start()
@@ -226,13 +223,4 @@ void UTurnManagerSubsystem::UpdateRemainingTurnsPerRound()
 	{			
 		Character.RemainingTurnsPerRound += Character.TurnsPerRound;
 	}	
-}
-
-void UTurnManagerSubsystem::PrintQueue()
-{
-	UE_LOG(ClairLog, Display, TEXT("UTurnManagerSubsystem::PrintQueue"));
-	for (AActor* Actor : TurnQueue)
-	{
-		UE_LOG(ClairLog, Display, TEXT("Character in queue: %s"), *GetNameSafe(Actor));
-	}
 }

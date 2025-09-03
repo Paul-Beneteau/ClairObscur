@@ -27,6 +27,7 @@ float UClairConsumableMagnitudeCalculation::CalculateBaseMagnitude_Implementatio
 
 	// retrieve instigator max health
 	float SourceMaxHealth { 0.0f };
+	
 	GetCapturedAttributeMagnitude(SourceMaxHealthDef, Spec, EvaluationParameters, SourceMaxHealth);
 
 	return SourceMaxHealth;

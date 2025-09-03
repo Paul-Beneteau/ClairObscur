@@ -6,7 +6,7 @@
 #include "ClairAbilitySystemComponent.h"
 #include "ClairAttributeComp.h"
 #include "ClairAttributeSet.h"
-#include "ClairObscur/ClairGameStatics.h"
+#include "ClairObscur/Core/ClairGameStatics.h"
 #include "ClairObscur/Core/TurnManagerSubsystem.h"
 
 AClairCharacter::AClairCharacter()
@@ -50,6 +50,7 @@ void AClairCharacter::OnAbilityEndedHandler(UGameplayAbility* GameplayAbility)
 
 void AClairCharacter::EndTurn()
 {
+	// Check if tags must be removed
 	if (DefencelessTag == FGameplayTag::EmptyTag)
 	{
 		UE_LOG(ClairLog, Warning, TEXT("AClairCharacter: Defenceless tag has not been set"));
@@ -69,7 +70,8 @@ void AClairCharacter::EndTurn()
 	
 	PreviousTurnGameplayTags.Reset();
 	PreviousTurnGameplayTags.AppendTags(GameplayTags);
-	
+
+	// End turn from TurnManagerSubsystem
 	if (UTurnManagerSubsystem* TurnManagerSubsystem = GetGameInstance()->GetSubsystem<UTurnManagerSubsystem>())
 	{
 		TurnManagerSubsystem->EndTurn();

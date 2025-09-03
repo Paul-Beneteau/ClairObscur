@@ -69,7 +69,7 @@ public:
 	void AddBurningStacks(const TArray<FBurningStack> InBurningStacks);
 	
 	UFUNCTION(BlueprintCallable, Category = "Status")	
-	float GetBurningDamage();
+	float GetBurningDamage() const;
 	
 protected:
 	UPROPERTY()
@@ -95,6 +95,7 @@ protected:
 	// Callback when action points count is changed
 	void HandleActionPointsChanged(AActor* Instigator, float OldValue, float NewValue);
 
+	// Check if burn damage must apply to the owner
 	UFUNCTION()
 	void HandleBurnStatus();
 };

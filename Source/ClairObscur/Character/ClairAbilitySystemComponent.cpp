@@ -1,11 +1,7 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "ClairAbilitySystemComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "ClairAttributeSet.h"
-#include "ClairPlayerCharacter.h"
-#include "ClairObscur/ClairGameStatics.h"
+#include "ClairObscur/Core/ClairGameStatics.h"
 
 // Grants abilities from ClairAbilitySet and saves their handle
 void UClairAbilitySystemComponent::Initialize(AActor* InOwnerActor, AActor* InAvatarActor)
@@ -21,38 +17,43 @@ void UClairAbilitySystemComponent::Initialize(AActor* InOwnerActor, AActor* InAv
 			return;
 		}
 		
-		FGameplayAbilitySpec AbilitySpec { ClairAbility.GameplayAbility,0, static_cast<int32>(ClairAbility.InputID)};
+		FGameplayAbilitySpec AbilitySpec { ClairAbility.GameplayAbility,0, static_cast<int32>(ClairAbility.Key)};
 		AbilitySpec.GameplayEventData = MakeShared<FGameplayEventData>();
 		AbilitySpec.GameplayEventData->EventTag = ClairAbility.GameplayEventTag;
 
-		AbilityHandles.Add(ClairAbility.InputID, GiveAbility(AbilitySpec));
+		AbilityHandles.Add(ClairAbility.Key, GiveAbility(AbilitySpec));
 	}
 }
 
-void UClairAbilitySystemComponent::ActivateAbility(const EAbilityInputID InputID)
+void UClairAbilitySystemComponent::ActivateAbility(const EClairAbilityKey Key)
 {
-	FGameplayAbilitySpec* AbilitySpec = FindAbilitySpecFromHandle(*AbilityHandles.Find(InputID));
-	check(AbilitySpec);
+	FGameplayAbilitySpec* AbilitySpec = FindAbilitySpecFromHandle(*AbilityHandles.Find(Key));
 	
+	if (AbilitySpec == nullptr)
+	{
+		UE_LOG(ClairLog, Warning, TEXT("UClairAbilitySystemComponent: ability to activate is not found"));
+		return;
+	}
+
+	// Activate ability by sending an event via a gameplay event tag
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwnerActor(), AbilitySpec->GameplayEventData->EventTag , *AbilitySpec->GameplayEventData);
 }
 
-// Send en event with an event tag associated from an InputID in AbilityHandles. This event activates the associated
-// ability with the target as a parameter. EventMagnitude represent a damage multiplier of the ability
-void UClairAbilitySystemComponent::ActivateAbilityOnTarget(const EAbilityInputID InputID, AActor* Target)
+void UClairAbilitySystemComponent::ActivateAbilityOnTarget(const EClairAbilityKey Key, AActor* Target)
 {	
-	FGameplayAbilitySpec* AbilitySpec = FindAbilitySpecFromHandle(*AbilityHandles.Find(InputID));
+	FGameplayAbilitySpec* AbilitySpec = FindAbilitySpecFromHandle(*AbilityHandles.Find(Key));
 	check(AbilitySpec && AbilitySpec->GameplayEventData);
 
+	// Saves the target that can be read by the blueprint gameplay ability
 	AbilitySpec->GameplayEventData->Target = Target;
 	
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetOwnerActor(), AbilitySpec->GameplayEventData->EventTag , *AbilitySpec->GameplayEventData);
 }
 
-bool UClairAbilitySystemComponent::CanActivateAbility(const EAbilityInputID InputID)
+bool UClairAbilitySystemComponent::CanActivateAbility(const EClairAbilityKey Key)
 {
-	FGameplayAbilitySpec* AbilitySpec = FindAbilitySpecFromHandle(*AbilityHandles.Find(InputID));
-	check(AbilitySpec && AbilitySpec->GameplayEventData);
+	FGameplayAbilitySpec* AbilitySpec = FindAbilitySpecFromHandle(*AbilityHandles.Find(Key));
+	check(AbilitySpec && AbilitySpec->Ability);
 	
-	return AbilitySpec->Ability->CanActivateAbility(*AbilityHandles.Find(InputID), AbilityActorInfo.Get());
+	return AbilitySpec->Ability->CanActivateAbility(*AbilityHandles.Find(Key), AbilityActorInfo.Get());
 }

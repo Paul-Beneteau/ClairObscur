@@ -2,7 +2,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "../ClairGameStatics.h"
+#include "ClairObscur/Core/ClairGameStatics.h"
 #include "Camera/CameraComponent.h"
 #include "ClairAbilitySystemComponent.h"
 #include "ClairBotCharacter.h"
@@ -40,10 +40,12 @@ void AClairPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	UEnhancedInputComponent* InputComp { CastChecked<UEnhancedInputComponent>(PlayerInputComponent) };
 	
 	// Binds input actions
-	InputComp->BindAction(Inputs->SelectConsumableMenu, ETriggerEvent::Started, this, &AClairPlayerCharacter::SetSelectItemContext);
-	InputComp->BindAction(Inputs->ActivateFirstConsumable, ETriggerEvent::Started, this, &AClairPlayerCharacter::TryActivateConsumable, EClairConsumableKey::FirstConsumable);
-	InputComp->BindAction(Inputs->ActivateSecondConsumable, ETriggerEvent::Started, this, &AClairPlayerCharacter::TryActivateConsumable, EClairConsumableKey::SecondConsumable);
-	InputComp->BindAction(Inputs->SelectAbility, ETriggerEvent::Started, this, &AClairPlayerCharacter::SetSelectAbilityContext);
+	InputComp->BindAction(Inputs->SelectConsumableMenu, ETriggerEvent::Started, this, &AClairPlayerCharacter::SetSelectConsumableContext);
+	InputComp->BindAction(Inputs->ActivateFirstConsumable, ETriggerEvent::Started, this, &AClairPlayerCharacter::TryActivateConsumable,
+						  EClairConsumableKey::FirstConsumable);
+	InputComp->BindAction(Inputs->ActivateSecondConsumable, ETriggerEvent::Started, this, &AClairPlayerCharacter::TryActivateConsumable,
+						  EClairConsumableKey::SecondConsumable);
+	InputComp->BindAction(Inputs->SelectAbilityMenu, ETriggerEvent::Started, this, &AClairPlayerCharacter::SetSelectAbilityContext);
 	InputComp->BindAction(Inputs->SelectNextTarget, ETriggerEvent::Started, this, &AClairPlayerCharacter::SelectNextTarget);
 	InputComp->BindAction(Inputs->SelectPreviousTarget, ETriggerEvent::Started, this, &AClairPlayerCharacter::SelectPreviousTarget);
 	InputComp->BindAction(Inputs->ActivateAbility, ETriggerEvent::Started, this, &AClairPlayerCharacter::ActivateAbility);
@@ -52,15 +54,15 @@ void AClairPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	for (FClairAbilityInput Ability : Inputs->Abilities)
 	{
 		// Dodge doesn't need a target like rest of abilities and doesn't end turn
-		if (Ability.InputID == EAbilityInputID::Dodge)
+		if (Ability.Key == EClairAbilityKey::Dodge)
 		{
 			InputComp->BindAction(Ability.InputAction, ETriggerEvent::Started, ClairAbilitySystemComp,
-				                  &UClairAbilitySystemComponent::ActivateAbility, Ability.InputID);
+				                  &UClairAbilitySystemComponent::ActivateAbility, Ability.Key);
 			continue;
 		}
 
 		InputComp->BindAction(Ability.InputAction, ETriggerEvent::Started, this,
-				&AClairPlayerCharacter::SetSelectTargetContext, Ability.InputID);
+				&AClairPlayerCharacter::SetSelectTargetContext, Ability.Key);
 	}
 }
 
@@ -80,8 +82,7 @@ void AClairPlayerCharacter::TakeTurn_Implementation()
 // and send corresponding context changed event
 void AClairPlayerCharacter::SetContext(const EPlayerContext PlayerContext, const FTransform& CameraTransform, 
 									   const UInputMappingContext* InputContext /* = nullptr */)
-{
-	
+{	
 	const APlayerController* PlayerController { GetController<APlayerController>() };
 
 	if (!PlayerController)
@@ -106,14 +107,16 @@ void AClairPlayerCharacter::SetContext(const EPlayerContext PlayerContext, const
 	}
 	
 	InputSubsystem->ClearAllMappings();
-	
+
+	// Add input mapping context if there is one. It is valid if there isn't one so we don't return.
 	if (InputContext)
 	{
 		InputSubsystem->AddMappingContext(InputContext, 0);
 	}
 
 	CameraComp->SetWorldTransform(CameraTransform);
-	
+
+	// Send event used to modify HUD
 	OnContextChanged.Broadcast(PlayerContext);
 }
 
@@ -124,11 +127,11 @@ void AClairPlayerCharacter::SetSelectActionContext()
 		    Inputs->SelectActionContext);
 }
 
-void AClairPlayerCharacter::SetSelectItemContext()
+void AClairPlayerCharacter::SetSelectConsumableContext()
 {
 	SetContext(EPlayerContext::SelectConsumable,
 			   FTransform(PlayerCameraRotation, GetActorLocation() + PlayerCameraLocationOffSet),
-			Inputs->SelectItemContext);
+			Inputs->SelectConsumableContext);
 }
 
 void AClairPlayerCharacter::SetSelectAbilityContext()
@@ -140,17 +143,17 @@ void AClairPlayerCharacter::SetSelectAbilityContext()
 
 // Saves the selected ability and switch input context and HUD to select target. Loads targets and move camera to the
 // first target
-void AClairPlayerCharacter::SetSelectTargetContext(EAbilityInputID InputID)
+void AClairPlayerCharacter::SetSelectTargetContext(const EClairAbilityKey Key)
 {
 	// Check that the ability can be activated before selecting it. e.g. if the character doesn't have enough action
 	// points to use the ability
-	if (ClairAbilitySystemComp->CanActivateAbility(InputID) == false)
+	if (ClairAbilitySystemComp->CanActivateAbility(Key) == false)
 	{
 		return;
 	}
 
 	// Saves selected ability that will be activated if the player select a target
-	SelectedAbility = InputID;
+	SelectedAbility = Key;
 
 	GetTargets();
 	check(Targets.IsValidIndex(CurrentTargetIndex));
@@ -161,7 +164,7 @@ void AClairPlayerCharacter::SetSelectTargetContext(EAbilityInputID InputID)
 }
 
 // If there is a consumable, activate it and end turn
-void AClairPlayerCharacter::TryActivateConsumable(EClairConsumableKey Key)
+void AClairPlayerCharacter::TryActivateConsumable(const EClairConsumableKey Key)
 {
 	if (ClairConsumableComp->GetConsumableCount(Key))
 	{
@@ -216,7 +219,7 @@ void AClairPlayerCharacter::ActivateAbility()
 // End the turn of the character if the ability isn't a dodge
 void AClairPlayerCharacter::OnAbilityEndedHandler(UGameplayAbility* GameplayAbility)
 {
-	if (GameplayAbility->GetCurrentAbilitySpec()->InputID == static_cast<int32>(EAbilityInputID::Dodge))
+	if (GameplayAbility->GetCurrentAbilitySpec()->InputID == static_cast<int32>(EClairAbilityKey::Dodge))
 	{
 		return;
 	}

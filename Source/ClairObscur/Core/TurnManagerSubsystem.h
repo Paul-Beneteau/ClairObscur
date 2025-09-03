@@ -96,6 +96,4 @@ protected:
 
 	// Update the remaining turn per round of every character. It should be used at the end of a round
 	void UpdateRemainingTurnsPerRound();
-	
-	void PrintQueue();
 };

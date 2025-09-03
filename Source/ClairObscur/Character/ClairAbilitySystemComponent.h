@@ -1,13 +1,22 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
-#include "ClairPlayerInputs.h"
 #include "ClairAbilitySystemComponent.generated.h"
 
 class UClairAttributeSet;
+
+// Key representing an ability. It is associated with an ability in a TMap
+UENUM(BlueprintType)
+enum class EClairAbilityKey : uint8
+{
+	None = 0 UMETA(Hidden),
+	PrimaryAttack = 1,
+	Dodge = 2,
+	PrimaryDefensiveAbility = 3,
+	PrimaryVirtuoseAbility = 4,
+	PrimaryOffensiveAbility = 5,
+};
 
 USTRUCT()
 struct FClairAbility
@@ -19,7 +28,7 @@ public:
 	TSubclassOf<UGameplayAbility> GameplayAbility;
 
 	UPROPERTY(EditDefaultsOnly)
-	EAbilityInputID InputID { EAbilityInputID::None };
+	EClairAbilityKey Key { EClairAbilityKey::None };
 	
 	// Gameplay event tag that activate the ability by sending an event
 	UPROPERTY(EditDefaultsOnly)
@@ -35,16 +44,16 @@ public:
 	void Initialize(AActor* InOwnerActor, AActor* InAvatarActor);
 
 	UFUNCTION()
-	void ActivateAbility(const EAbilityInputID InputID);
+	void ActivateAbility(const EClairAbilityKey Key);
 	
-	void ActivateAbilityOnTarget(const EAbilityInputID InputID, AActor* Target);
+	void ActivateAbilityOnTarget(const EClairAbilityKey Key, AActor* Target);
 
-	bool CanActivateAbility(const EAbilityInputID InputID);
+	bool CanActivateAbility(const EClairAbilityKey Key);
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Abilities")
 	TArray<FClairAbility> InitialAbilities;
 	
 	// Ability handles used to activate abilities
-	TMap<EAbilityInputID, FGameplayAbilitySpecHandle> AbilityHandles;
+	TMap<EClairAbilityKey, FGameplayAbilitySpecHandle> AbilityHandles;
 };

@@ -1,12 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "ClairConsumableComponent.h"
 
 #include "ClairPlayerCharacter.h"
-#include "ClairObscur/ClairGameStatics.h"
+#include "ClairObscur/Core/ClairGameStatics.h"
 
-int32 UClairConsumableComponent::GetConsumableCount(EClairConsumableKey Key) const
+int32 UClairConsumableComponent::GetConsumableCount(const EClairConsumableKey Key) const
 {
 	const FClairConsumableItem* Consumable = Consumables.Find(Key);
 	
@@ -19,7 +16,8 @@ int32 UClairConsumableComponent::GetConsumableCount(EClairConsumableKey Key) con
 	return Consumable->Count;
 }
 
-void UClairConsumableComponent::ActivateConsumable(EClairConsumableKey Key)
+// If the consumable is found, apply his effect and reduce his count by 1.
+void UClairConsumableComponent::ActivateConsumable(const EClairConsumableKey Key)
 {
 	FClairConsumableItem* Consumable = Consumables.Find(Key);
 	

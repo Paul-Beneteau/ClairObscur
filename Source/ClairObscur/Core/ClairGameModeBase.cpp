@@ -1,10 +1,7 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "ClairGameModeBase.h"
 
 #include "TurnManagerSubsystem.h"
-#include "ClairObscur/ClairGameStatics.h"
+#include "ClairObscur/Core/ClairGameStatics.h"
 #include "ClairObscur/Character/ClairAttributeComp.h"
 #include "ClairObscur/Character/ClairBotCharacter.h"
 #include "ClairObscur/Character/ClairCharacter.h"
@@ -24,7 +21,6 @@ void AClairGameModeBase::StartPlay()
 	{
 		if (UClairAttributeComp* AttributeComp = Character->FindComponentByClass<UClairAttributeComp>())
 		{
-			//AttributeComp->OnDeath.AddUniqueDynamic(this, &AClairGameModeBase::CheckCombatEnd);
 			AttributeComp->OnDeathStatusChanged.AddUniqueDynamic(this, &AClairGameModeBase::CheckCombatEnd);
 		}
 	}
@@ -88,16 +84,15 @@ void AClairGameModeBase::CheckCombatEnd()
 // Open the default level, send OnCombatRestart event to change the current UI and reset turn order
 void AClairGameModeBase::RestartCombat() const
 {
-	OnCombatRestart.Broadcast();
+	if (LevelName.IsNone())
+	{
+		UE_LOG(ClairLog, Warning, TEXT("AClairGameModeBase: Level name has not been set"));
+		return;
+	}
 
-	if (LevelName.IsNone() == false)
-	{
-		UGameplayStatics::OpenLevel(GetWorld(), LevelName);
-	}
-	else
-	{
-		UE_LOG(ClairLog, Error, TEXT("AClairGameModeBase: Level name has not been set"));
-	}
+	OnCombatRestart.Broadcast();
+	
+	UGameplayStatics::OpenLevel(GetWorld(), LevelName);
 
 	// Reset turn order and unpause TurnManagerSubsystem with a delay to wait for the level to be loaded 
 	if (UTurnManagerSubsystem* TurnManagerSubsystem = GetGameInstance()->GetSubsystem<UTurnManagerSubsystem>())

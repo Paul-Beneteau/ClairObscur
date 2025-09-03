@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -8,6 +6,7 @@
 
 class USizeBox;
 
+// Render widget in the world instead of the screen
 UCLASS()
 class CLAIROBSCUR_API UClairWorldUserWidget : public UUserWidget
 {
@@ -15,10 +14,10 @@ class CLAIROBSCUR_API UClairWorldUserWidget : public UUserWidget
 	
 public:
 	UPROPERTY(BlueprintReadWrite, Category = "UI", meta = (ExposeOnSpawn=true))
-	AActor* AttachedActor;
+	TObjectPtr<AActor> AttachedActor;
 		
 	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))		
-	USizeBox* ParentSizeBox;
+	TObjectPtr<USizeBox> ParentSizeBox;
 	
 protected:
 	// Render the widget to the screen from his attached actor world location.

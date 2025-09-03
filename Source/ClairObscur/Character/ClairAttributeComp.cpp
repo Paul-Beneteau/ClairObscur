@@ -1,10 +1,11 @@
 #include "ClairAttributeComp.h"
 
 #include "ClairPlayerCharacter.h"
-#include "ClairObscur/ClairGameStatics.h"
+#include "ClairObscur/Core/ClairGameStatics.h"
 #include "ClairObscur/Core/TurnManagerSubsystem.h"
 #include "GameFramework/Character.h"
 
+// Binds delegate with their associated function and apply an initial gameplay effect
 void UClairAttributeComp::Initialize(UClairAbilitySystemComponent* InAbilitySystemComp)
 {	
 	ClairAbilitySystemComp = InAbilitySystemComp;
@@ -42,6 +43,7 @@ void UClairAttributeComp::Initialize(UClairAbilitySystemComponent* InAbilitySyst
 	}
 }
 
+// Send the associated event and handle character death
 void UClairAttributeComp::HandleHealthChanged(AActor* Instigator, float OldValue, float NewValue)
 {
 	// If the character died
@@ -76,7 +78,6 @@ void UClairAttributeComp::HandleHealthChanged(AActor* Instigator, float OldValue
 			TurnManagerSubsystem->RemoveCharacter(GetOwner());
 		}
 		
-		//OnDeath.Broadcast();
 		OnDeathStatusChanged.Broadcast();
 	}
 
@@ -89,49 +90,52 @@ void UClairAttributeComp::HandleActionPointsChanged(AActor* Instigator, float Ol
 }
 
 void UClairAttributeComp::HandleBurnStatus()
-{	
-	if (AClairCharacter* Character { Cast<AClairCharacter>(GetOwner()) })
+{
+	AClairCharacter* Character { Cast<AClairCharacter>(GetOwner()) };
+	if (Character == nullptr)
 	{
-		float BurningDamage = { GetBurningDamage() };
+		UE_LOG(ClairLog, Warning, TEXT("ClairAttributeComp: Owner is not a ClairCharacter"));
+		return;
+	}
+	
+	float BurningDamage { GetBurningDamage() };
 		
-		// Apply burning effect if character has burning stacks
-		if (BurningDamage > 0 && BurningStacks.IsValidIndex(0))
-		{
-			// TODO: Find the right way to apply effect as we are taking one of the gameplay effect then modify it with
-			// the new magnitude and set it back to original after.
-			UGameplayEffect* BurningEffect = BurningStacks[0].Effect->GetDefaultObject<UGameplayEffect>();			
+	// Apply burning effect if character has burning stacks
+	if (BurningDamage > 0 && BurningStacks.IsValidIndex(0))
+	{
+		// TODO: Find the right way to apply effect as we are taking one of the gameplay effect then modify it with
+		// the new magnitude and set it back to original after.
+		UGameplayEffect* BurningEffect = BurningStacks[0].Effect->GetDefaultObject<UGameplayEffect>();			
 			
-			// Save BaseMagnitude to set it back after being modified and applied
-			FGameplayEffectModifierMagnitude BaseMagnitude = BurningEffect->Modifiers[0].ModifierMagnitude;
+		// Save BaseMagnitude to set it back after being modified and applied
+		FGameplayEffectModifierMagnitude BaseMagnitude = BurningEffect->Modifiers[0].ModifierMagnitude;
 			
-			BurningEffect->Modifiers[0].ModifierMagnitude = FGameplayEffectModifierMagnitude(BurningDamage);
+		BurningEffect->Modifiers[0].ModifierMagnitude = FGameplayEffectModifierMagnitude(BurningDamage);
 				
-			ClairAbilitySystemComp->ApplyGameplayEffectToSelf(BurningEffect,0.0f, ClairAbilitySystemComp->MakeEffectContext());
+		ClairAbilitySystemComp->ApplyGameplayEffectToSelf(BurningEffect,0.0f, ClairAbilitySystemComp->MakeEffectContext());
 			
-			BurningEffect->Modifiers[0].ModifierMagnitude = BaseMagnitude;
+		BurningEffect->Modifiers[0].ModifierMagnitude = BaseMagnitude;
 
-			// Remove 1 turn for the turn duration of burning stacks
-			for (FBurningStack& BurningStack : BurningStacks)
-			{
-				BurningStack.TurnDuration--;
-			}
-
-			int32 BurningStacksCount = { BurningStacks.Num() };
-			
-			// Remove burning stack with null or negative turn duration
-			BurningStacks.RemoveAll([&](const FBurningStack& BurningStack)
-			{
-				return BurningStack.TurnDuration <= 0;
-			});
-
-			// If one or more burning stack has been removed 
-			if (BurningStacksCount > BurningStacks.Num())
-			{
-				//OnBurnStatusChanged.Broadcast(BurningStacks.Num());
-				OnBurnStatusChanged.Broadcast();
-			}
+		// Remove 1 turn for the turn duration of burning stacks
+		for (FBurningStack& BurningStack : BurningStacks)
+		{
+			BurningStack.TurnDuration--;
 		}
-	}	
+
+		int32 BurningStacksCount = { BurningStacks.Num() };
+			
+		// Remove burning stack with null or negative turn duration
+		BurningStacks.RemoveAll([&](const FBurningStack& BurningStack)
+		{
+			return BurningStack.TurnDuration <= 0;
+		});
+
+		// If one or more burning stack has been removed 
+		if (BurningStacksCount > BurningStacks.Num())
+		{
+			OnBurnStatusChanged.Broadcast();
+		}
+	}
 }
 
 void UClairAttributeComp::AddBurningStacks(const TArray<FBurningStack> InBurningStacks)
@@ -141,15 +145,14 @@ void UClairAttributeComp::AddBurningStacks(const TArray<FBurningStack> InBurning
 	// Send event that the character is burning 
 	if (BurningStacks.Num() > 0)
 	{
-		//OnBurnStatusChanged.Broadcast(BurningStacks.Num());
 		OnBurnStatusChanged.Broadcast();
 	}
 }
 
 // Compute Burning damage by adding each burning stack damage to the total burning damage
-float UClairAttributeComp::GetBurningDamage()
+float UClairAttributeComp::GetBurningDamage() const
 {
-	float BurningDamage = { 0 };
+	float BurningDamage { 0 };
 
 	// Adds each stack damage to the total burning damage
 	for (FBurningStack BurningStack : BurningStacks)

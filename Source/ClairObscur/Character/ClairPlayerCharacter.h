@@ -8,7 +8,7 @@
 
 enum class EClairConsumableKey : uint8;
 class UClairConsumableComponent;
-enum class EAbilityInputID : uint8;
+enum class EClairAbilityKey : uint8;
 class UGameplayEffect;
 class UCameraComponent;
 class UInputMappingContext;
@@ -24,14 +24,17 @@ enum class EPlayerContext : uint8
 	SelectAbility = 3,
 	// Player must choose a target for the selected ability
 	SelectTarget = 4,
-	// Character is doing the selected ability
+	// Selected ability is being activated
 	AbilityActivated = 5,
-	// Context between end of a turn and start of the next turn
+	// Player is waiting for bots to play their turns
 	WaitNextTurn = 6,
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnContextChanged, EPlayerContext, ContextEvent);
 
+// Base class for character used by a player. Manages player inputs and player context. Context is composed of a camera
+// view, a unique input mapping context that can be used by the player and the player HUD which is managed in blueprint
+// by assigning the delegate OnContextChanged to be modified according to the player context.
 UCLASS()
 class CLAIROBSCUR_API AClairPlayerCharacter : public AClairCharacter
 {
@@ -41,12 +44,13 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	TObjectPtr<UCameraComponent> CameraComp;	
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Consumable")
-	TObjectPtr<UClairConsumableComponent> ClairConsumableComp;
-	
-	// Event when the player context changes
+	// Delegate used by HUD to know when the current player context
 	UPROPERTY(BlueprintAssignable)
 	FOnContextChanged OnContextChanged;
+	
+	// Manage consumable used by player
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Consumable")
+	TObjectPtr<UClairConsumableComponent> ClairConsumableComp;
 	
 	AClairPlayerCharacter();
 	
@@ -55,18 +59,18 @@ public:
 	// Start player turn
 	virtual void TakeTurn_Implementation() override;
 
-protected:
-	
+protected:	
 	// Dataset containing player inputs
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UClairPlayerInputs> Inputs;
 
-	// Saves the selected ability to activate it later
-	EAbilityInputID SelectedAbility { EAbilityInputID::None };
+	// Saves the selected ability that can be activated later if the player choose a target
+	EClairAbilityKey SelectedAbility { EClairAbilityKey::None };
 
-	// Saves targets to switch between them via inputs
+	// Enemy Targets found. Target are sorted by their Y axis location
 	UPROPERTY()
-	TArray<AActor*> Targets;	
+	TArray<AActor*> Targets;
+	// Current target of the selected ability
 	int32 CurrentTargetIndex { 0 };
 
 	// Gameplay effect applied at the beginning of each turn. Gives 1 AP for now
@@ -88,20 +92,20 @@ protected:
 	// sent via an event to change HUD accordingly
 	void SetContext(const EPlayerContext PlayerContext, const FTransform& CameraTransform, const UInputMappingContext* InputContext = nullptr);
 
-	// Set Context where player must select an action (Select object/Select ability/Attack)
+	// Set Context where player must select an action (Select consumable menu/Select ability menu/Attack)
 	void SetSelectActionContext();
 
-	// Set Context where player must select an item
-	void SetSelectItemContext();
+	// Set Context where player must select a consumable (Heal tint/Energy tint)
+	void SetSelectConsumableContext();
 	
 	// Set Context where player must select an ability
 	void SetSelectAbilityContext();
 	
-	// Set Context where player must select a target
-	void SetSelectTargetContext(EAbilityInputID InputID);
+	// Set Context where player must select a target after having selected an ability
+	void SetSelectTargetContext(const EClairAbilityKey Key);
 
 	// Try to activate consumable and end turn if it is activated
-	void TryActivateConsumable(EClairConsumableKey Key);
+	void TryActivateConsumable(const EClairConsumableKey Key);
 	
 	// Get player targets and sort them by their Y axis.
 	void GetTargets();

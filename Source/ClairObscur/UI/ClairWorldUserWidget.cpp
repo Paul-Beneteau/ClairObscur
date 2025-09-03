@@ -1,9 +1,7 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "ClairWorldUserWidget.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
+#include "ClairObscur/Core/ClairGameStatics.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/SizeBox.h"
 
@@ -14,7 +12,7 @@ void UClairWorldUserWidget::NativeTick(const FGeometry& MyGeometry, float InDelt
 
 	if (AttachedActor == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("UClairWorldUserWidget: Attached Actor is null"));
+		UE_LOG(ClairLog, Warning, TEXT("UClairWorldUserWidget: Attached Actor is null"));
 		return;
 	}
 
@@ -30,7 +28,7 @@ void UClairWorldUserWidget::NativeTick(const FGeometry& MyGeometry, float InDelt
 		
 		if (!ParentSizeBox)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("UClairWorldUserWidget: ParentSizeBox is null"));
+			UE_LOG(ClairLog, Warning, TEXT("UClairWorldUserWidget: ParentSizeBox is null"));
 			return;
 		}
 		else

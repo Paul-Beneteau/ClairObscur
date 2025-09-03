@@ -13,7 +13,7 @@ void AClairBotCharacter::TakeTurn_Implementation()
 	
 	if (APlayerController* PlayerController = GetWorld()->GetFirstPlayerController())
 	{
-		ClairAbilitySystemComp->ActivateAbilityOnTarget(PrimaryAttack, PlayerController->GetCharacter());
+		ClairAbilitySystemComp->ActivateAbilityOnTarget(DefaultAttack, PlayerController->GetCharacter());
 	}
 }
 
