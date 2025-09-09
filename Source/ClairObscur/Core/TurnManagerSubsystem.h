@@ -64,9 +64,10 @@ protected:
 	// Contains every actor that implements TurnCharacterInterface in the world 
 	UPROPERTY()
 	TArray<FTurnCharacter> Characters;
-
+	
+	// LIFO that Contains next TurnCharacters that will take turn. TArray is used instead of TQueue as it is not
+	// exposed to blueprint.
 	UPROPERTY()
-	// LIFO that Contains next TurnCharacters that will take turn.
 	TArray<AActor*> TurnQueue;
 	
 	int32 TurnQueueSize { 6 };
