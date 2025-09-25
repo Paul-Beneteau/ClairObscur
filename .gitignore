@@ -84,3 +84,5 @@ DerivedDataCache/*
 *.csproj
 *.sln.DotSettings
 *.sln.DotSettings.user
+*.DotSettings.user
+.vsconfig
